@@ -1,0 +1,61 @@
+# Gradle files
+.gradle/
+build/
+*.jar
+*.jks
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+
+# Android Emulator
+*.avd/
+*.log
+
+# Build outputs
+*.apk
+*.aar
+*.ap_
+*.zip
+*.tar.gz
+*.rar
+
+# Generated files
+gen/
+out/
+
+# Backup files
+*.bak
+*~
+*.swp
+*.swo
+*.swn
+
+# IDE-specific files
+.classpath
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Kotlin
+*.kotlin_module
+
+# Misc
+.gradle
+*.class
