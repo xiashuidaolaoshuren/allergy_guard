@@ -1,4 +1,10 @@
-# Project Proposal: AllergyGuard
+# CSCI3310 Project Proposal: AllergyGuard
+
+## Group Information
+- **ID** : 18
+- **Members:**
+    1.  **SO Chun Ning** (AIST) - 1155192846 (solo)
+
 
 ## 1. Languages
 *   **Kotlin**: The primary programming language for the Android application, chosen for its modern syntax, null safety, and official support from Google.
