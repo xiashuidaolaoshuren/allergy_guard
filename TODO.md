@@ -1,14 +1,14 @@
 # AllergyGuard Project TODO List
 
 ## Phase 1: Project Setup & Infrastructure
-- [ ] Initialize Android Studio Project (Target API 30+)
-- [ ] Enable ViewBinding in `build.gradle`
-- [ ] Add Dependencies:
-    - [ ] Google ML Kit (Text Recognition)
-    - [ ] CameraX (Core, Lifecycle, View)
-    - [ ] Room Persistence Library
-    - [ ] Kotlin Coroutines & Lifecycle components
-- [ ] Set up basic project package structure (data, ui, util, logic)
+- [x] Initialize Android Studio Project (Target API 30+)
+- [x] Enable ViewBinding in `build.gradle`
+- [x] Add Dependencies:
+    - [x] Google ML Kit (Text Recognition)
+    - [x] CameraX (Core, Lifecycle, View)
+    - [x] Room Persistence Library
+    - [x] Kotlin Coroutines & Lifecycle components
+- [x] Set up basic project package structure (data, ui, util, logic)
 
 ## Phase 2: Repository & Local Storage (Room)
 - [ ] Define `Allergen` Entity (id, name, isEnabled, isCustom)
