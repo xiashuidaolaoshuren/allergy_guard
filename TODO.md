@@ -11,7 +11,7 @@
 - [x] Set up basic project package structure (data, ui, util, logic)
 
 ## Phase 2: Repository & Local Storage (Room)
-- [ ] Define `Allergen` Entity (id, name, isEnabled, isCustom)
+- [x] Define `Allergen` Entity (id, name, isEnabled, isCustom)
 - [ ] Define `ScanResult` Entity (id, timestamp, textContent, hasAllergens, location)
 - [ ] Implement `AllergenDao` and `ScanHistoryDao`
 - [ ] Create `AppDatabase` singleton
