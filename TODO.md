@@ -12,7 +12,7 @@
 
 ## Phase 2: Repository & Local Storage (Room)
 - [x] Define `Allergen` Entity (id, name, isEnabled, isCustom)
-- [ ] Define `ScanResult` Entity (id, timestamp, textContent, hasAllergens, location)
+- [x] Define `ScanResult` Entity (id, timestamp, textContent, hasAllergens, location)
 - [ ] Implement `AllergenDao` and `ScanHistoryDao`
 - [ ] Create `AppDatabase` singleton
 - [ ] Seed database with common allergens (Peanuts, Gluten, Shellfish, etc.)
