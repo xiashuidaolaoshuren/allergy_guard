@@ -14,8 +14,8 @@
 - [x] Define `Allergen` Entity (id, name, isEnabled, isCustom)
 - [x] Define `ScanResult` Entity (id, timestamp, textContent, hasAllergens, location)
 - [x] Implement `AllergenDao` and `ScanHistoryDao`
-- [ ] Create `AppDatabase` singleton
-- [ ] Seed database with common allergens (Peanuts, Gluten, Shellfish, etc.)
+- [x] Create `AppDatabase` singleton
+- [x] Seed database with common allergens (Peanuts, Gluten, Shellfish, etc.)
 
 ## Phase 3: UI - Profile & Allergen Management
 - [ ] Create `AllergenListActivity/Fragment`
