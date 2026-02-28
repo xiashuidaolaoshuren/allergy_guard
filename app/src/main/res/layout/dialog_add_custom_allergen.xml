@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.textfield.TextInputLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/textInputCustomAllergen"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="@string/custom_allergen_name_hint"
+    android:paddingStart="8dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/editTextCustomAllergenName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:imeOptions="actionDone"
+        android:inputType="textCapWords" />
+
+</com.google.android.material.textfield.TextInputLayout>

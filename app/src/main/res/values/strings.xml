@@ -2,4 +2,10 @@
     <string name="app_name">Allergy Guard</string>
     <string name="manage_allergens">Manage Allergens</string>
     <string name="allergen_list_title">Allergens</string>
+    <string name="add_custom_allergen">Add Custom Allergen</string>
+    <string name="custom_allergen_name_hint">Allergen name</string>
+    <string name="action_add">Add</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="error_custom_allergen_blank">Please enter an allergen name.</string>
+    <string name="error_custom_allergen_duplicate">This allergen already exists.</string>
 </resources>

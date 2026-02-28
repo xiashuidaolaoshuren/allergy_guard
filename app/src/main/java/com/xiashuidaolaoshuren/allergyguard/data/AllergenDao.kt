@@ -17,6 +17,12 @@ interface AllergenDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllergen(allergen: Allergen)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllergenIgnore(allergen: Allergen): Long
+
+    @Query("SELECT EXISTS(SELECT 1 FROM allergens WHERE TRIM(LOWER(name)) = TRIM(LOWER(:name)) LIMIT 1)")
+    suspend fun allergenNameExists(name: String): Boolean
+
     @Query("UPDATE allergens SET isEnabled = :isEnabled WHERE id = :id")
     suspend fun updateAllergenEnabledStatus(id: String, isEnabled: Boolean)
 

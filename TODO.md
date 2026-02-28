@@ -20,7 +20,7 @@
 ## Phase 3: UI - Profile & Allergen Management
 - [x] Create `AllergenListActivity/Fragment`
 - [x] Implement `RecyclerView` for toggling allergens
-- [ ] Add "Add Custom Allergen" dialog/form
+- [x] Add "Add Custom Allergen" dialog/form
 - [x] Implement `ViewModel` for state management
 
 ## Phase 4: Camera Integration (CameraX)
