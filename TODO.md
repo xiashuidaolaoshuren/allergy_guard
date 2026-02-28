@@ -18,10 +18,10 @@
 - [x] Seed database with common allergens (Peanuts, Gluten, Shellfish, etc.)
 
 ## Phase 3: UI - Profile & Allergen Management
-- [ ] Create `AllergenListActivity/Fragment`
-- [ ] Implement `RecyclerView` for toggling allergens
+- [x] Create `AllergenListActivity/Fragment`
+- [x] Implement `RecyclerView` for toggling allergens
 - [ ] Add "Add Custom Allergen" dialog/form
-- [ ] Implement `ViewModel` for state management
+- [x] Implement `ViewModel` for state management
 
 ## Phase 4: Camera Integration (CameraX)
 - [ ] Request Camera Permissions handling

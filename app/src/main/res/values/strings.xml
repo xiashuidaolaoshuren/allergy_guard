@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Allergy Guard</string>
+    <string name="manage_allergens">Manage Allergens</string>
+    <string name="allergen_list_title">Allergens</string>
 </resources>

@@ -1,11 +1,13 @@
 package com.xiashuidaolaoshuren.allergyguard
 
+import android.content.Intent
 import android.os.Bundle
-import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityMainBinding
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityMainBinding
+import com.xiashuidaolaoshuren.allergyguard.ui.AllergenListActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -20,6 +22,10 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        binding.buttonManageAllergens.setOnClickListener {
+            startActivity(Intent(this, AllergenListActivity::class.java))
         }
     }
 }

@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AllergyGuard">
         <activity
+            android:name=".ui.AllergenListActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
