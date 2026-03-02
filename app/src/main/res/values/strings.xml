@@ -1,7 +1,11 @@
 <resources>
     <string name="app_name">Allergy Guard</string>
+    <string name="start_scan">Start Scan</string>
     <string name="manage_allergens">Manage Allergens</string>
     <string name="allergen_list_title">Allergens</string>
+    <string name="camera_scan_title">Scan Label</string>
+    <string name="camera_permission_denied">Camera permission is required to scan labels.</string>
+    <string name="camera_initialization_error">Unable to initialize camera. Please try again.</string>
     <string name="add_custom_allergen">Add Custom Allergen</string>
     <string name="custom_allergen_name_hint">Allergen name</string>
     <string name="action_add">Add</string>

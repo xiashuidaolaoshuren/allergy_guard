@@ -24,10 +24,10 @@
 - [x] Implement `ViewModel` for state management
 
 ## Phase 4: Camera Integration (CameraX)
-- [ ] Request Camera Permissions handling
-- [ ] Implement `PreviewView` layout
-- [ ] Set up `ProcessCameraProvider` and bind to lifecycle
-- [ ] Implement Image Analysis use case (Analyzer)
+- [x] Request Camera Permissions handling
+- [x] Implement `PreviewView` layout
+- [x] Set up `ProcessCameraProvider` and bind to lifecycle
+- [x] Implement Image Analysis use case (Analyzer)
 
 ## Phase 5: OCR & Detection Logic
 - [ ] Integrate ML Kit `TextRecognizer` in `ImageAnalysis.Analyzer`

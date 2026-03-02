@@ -8,6 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityMainBinding
 import com.xiashuidaolaoshuren.allergyguard.ui.AllergenListActivity
+import com.xiashuidaolaoshuren.allergyguard.ui.CameraScanActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -26,6 +27,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.buttonManageAllergens.setOnClickListener {
             startActivity(Intent(this, AllergenListActivity::class.java))
+        }
+
+        binding.buttonStartScan.setOnClickListener {
+            startActivity(Intent(this, CameraScanActivity::class.java))
         }
     }
 }
