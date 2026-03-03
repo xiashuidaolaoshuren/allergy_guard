@@ -30,9 +30,9 @@
 - [x] Implement Image Analysis use case (Analyzer)
 
 ## Phase 5: OCR & Detection Logic
-- [ ] Integrate ML Kit `TextRecognizer` in `ImageAnalysis.Analyzer`
-- [ ] Implement fuzzy matching utility (e.g., Levenshtein distance or simplified keyword filtering)
-- [ ] Handle case-insensitivity and whitespace variations in detected text
+- [x] Integrate ML Kit `TextRecognizer` in `ImageAnalysis.Analyzer`
+- [x] Implement fuzzy matching utility (e.g., Levenshtein distance or simplified keyword filtering)
+- [x] Handle case-insensitivity and whitespace variations in detected text
 - [ ] Optimize the scan loop (e.g., process every X frames)
 
 ## Phase 6: UI - Visual Overlays & Feedback

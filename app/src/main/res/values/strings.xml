@@ -6,6 +6,10 @@
     <string name="camera_scan_title">Scan Label</string>
     <string name="camera_permission_denied">Camera permission is required to scan labels.</string>
     <string name="camera_initialization_error">Unable to initialize camera. Please try again.</string>
+    <string name="camera_scanning">Scanning label text…</string>
+    <string name="camera_no_allergens_found">No enabled allergens detected.</string>
+    <string name="camera_detected_allergens">Detected allergens: %1$s</string>
+    <string name="camera_ocr_error">Unable to read text from camera frame.</string>
     <string name="add_custom_allergen">Add Custom Allergen</string>
     <string name="custom_allergen_name_hint">Allergen name</string>
     <string name="action_add">Add</string>

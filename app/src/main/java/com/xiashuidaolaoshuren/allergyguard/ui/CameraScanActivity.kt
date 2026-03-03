@@ -18,6 +18,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.xiashuidaolaoshuren.allergyguard.R
+import com.xiashuidaolaoshuren.allergyguard.data.AppDatabase
+import com.xiashuidaolaoshuren.allergyguard.data.RoomAllergenRepository
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityCameraScanBinding
 import com.xiashuidaolaoshuren.allergyguard.logic.CameraFrameAnalyzer
 import com.xiashuidaolaoshuren.allergyguard.ui.camera.CameraScanViewModel
@@ -27,8 +29,13 @@ import java.util.concurrent.Executors
 
 class CameraScanActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraScanBinding
-    private val viewModel: CameraScanViewModel by viewModels()
+    private val viewModel: CameraScanViewModel by viewModels {
+        val allergenDao = AppDatabase.getInstance(applicationContext).allergenDao()
+        val repository = RoomAllergenRepository(allergenDao)
+        CameraScanViewModel.Factory(repository)
+    }
     private lateinit var cameraExecutor: ExecutorService
+    private var frameAnalyzer: CameraFrameAnalyzer? = null
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -54,6 +61,8 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        frameAnalyzer?.close()
+        frameAnalyzer = null
         cameraExecutor.shutdown()
         super.onDestroy()
     }
@@ -71,7 +80,17 @@ class CameraScanActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     if (state.showStatus && state.statusMessageResId != null) {
-                        binding.textCameraStatus.text = getString(state.statusMessageResId)
+                        binding.textCameraStatus.text = if (
+                            state.statusMessageResId == R.string.camera_detected_allergens &&
+                            state.detectedAllergens.isNotEmpty()
+                        ) {
+                            getString(
+                                state.statusMessageResId,
+                                state.detectedAllergens.joinToString(separator = ", ")
+                            )
+                        } else {
+                            getString(state.statusMessageResId)
+                        }
                         binding.textCameraStatus.visibility = android.view.View.VISIBLE
                     } else {
                         binding.textCameraStatus.visibility = android.view.View.GONE
@@ -109,7 +128,13 @@ class CameraScanActivity : AppCompatActivity() {
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                     .also {
-                        it.setAnalyzer(cameraExecutor, CameraFrameAnalyzer())
+                        frameAnalyzer?.close()
+                        frameAnalyzer = CameraFrameAnalyzer(
+                            callbackExecutor = ContextCompat.getMainExecutor(this),
+                            onTextRecognized = viewModel::onTextRecognized,
+                            onOcrError = viewModel::onOcrError
+                        )
+                        it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }
 
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
