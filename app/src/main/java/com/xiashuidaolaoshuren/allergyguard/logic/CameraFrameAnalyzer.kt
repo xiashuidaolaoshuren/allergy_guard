@@ -9,16 +9,25 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.io.Closeable
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class CameraFrameAnalyzer(
     private val callbackExecutor: Executor,
     private val onTextRecognized: (String) -> Unit,
-    private val onOcrError: () -> Unit
+    private val onOcrError: () -> Unit,
+    private val processEveryNFrames: Int = 1
 ) : ImageAnalysis.Analyzer, Closeable {
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val isProcessingFrame = AtomicBoolean(false)
+    private val frameCounter = AtomicInteger(0)
 
     override fun analyze(image: ImageProxy) {
+        val frameIndex = frameCounter.getAndIncrement()
+        if (!shouldProcessFrame(frameIndex, processEveryNFrames)) {
+            image.close()
+            return
+        }
+
         if (!isProcessingFrame.compareAndSet(false, true)) {
             image.close()
             return
@@ -51,7 +60,12 @@ class CameraFrameAnalyzer(
         textRecognizer.close()
     }
 
-    private companion object {
-        const val TAG = "CameraFrameAnalyzer"
+    companion object {
+        private const val TAG = "CameraFrameAnalyzer"
+
+        internal fun shouldProcessFrame(frameIndex: Int, processEveryNFrames: Int): Boolean {
+            val validInterval = processEveryNFrames.coerceAtLeast(1)
+            return frameIndex % validInterval == 0
+        }
     }
 }

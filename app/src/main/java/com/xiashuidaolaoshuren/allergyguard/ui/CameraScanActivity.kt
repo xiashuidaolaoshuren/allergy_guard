@@ -132,7 +132,8 @@ class CameraScanActivity : AppCompatActivity() {
                         frameAnalyzer = CameraFrameAnalyzer(
                             callbackExecutor = ContextCompat.getMainExecutor(this),
                             onTextRecognized = viewModel::onTextRecognized,
-                            onOcrError = viewModel::onOcrError
+                            onOcrError = viewModel::onOcrError,
+                            processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES
                         )
                         it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }
@@ -154,5 +155,9 @@ class CameraScanActivity : AppCompatActivity() {
             },
             ContextCompat.getMainExecutor(this)
         )
+    }
+
+    private companion object {
+        const val OCR_PROCESS_EVERY_N_FRAMES = 3
     }
 }
