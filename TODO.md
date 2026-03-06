@@ -36,11 +36,11 @@
 - [x] Optimize the scan loop (e.g., process every X frames)
 
 ## Phase 6: UI - Visual Overlays & Feedback
-- [ ] Create `OverlayView` (Custom View) to draw bounds on top of camera
-- [ ] Implement coordinate transformation (ML Kit coordinates to View coordinates)
-- [ ] Logic for color-coded feedback:
-    - [ ] **Red** box/text for detected allergen
-    - [ ] **Green** indicator for "Safe" scan completion
+- [x] Create `OverlayView` (Custom View) to draw bounds on top of camera
+- [x] Implement coordinate transformation (ML Kit coordinates to View coordinates)
+- [x] Logic for color-coded feedback:
+    - [x] **Red** box/text for detected allergen
+    - [x] **Green** indicator for "Safe" scan completion
 - [ ] Add clear alert notification when an allergen is found
 
 ## Phase 7: History & Results

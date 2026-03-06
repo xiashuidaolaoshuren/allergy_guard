@@ -11,6 +11,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -23,6 +24,7 @@ import com.xiashuidaolaoshuren.allergyguard.data.RoomAllergenRepository
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityCameraScanBinding
 import com.xiashuidaolaoshuren.allergyguard.logic.CameraFrameAnalyzer
 import com.xiashuidaolaoshuren.allergyguard.ui.camera.CameraScanViewModel
+import com.xiashuidaolaoshuren.allergyguard.ui.camera.OverlayView
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -52,6 +54,7 @@ class CameraScanActivity : AppCompatActivity() {
         binding = ActivityCameraScanBinding.inflate(layoutInflater)
         setContentView(binding.root)
         title = getString(R.string.camera_scan_title)
+        binding.previewViewCamera.scaleType = PreviewView.ScaleType.FILL_CENTER
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -79,6 +82,23 @@ class CameraScanActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
+                    binding.overlayViewCamera.render(
+                        state.overlayFrame?.let { overlayFrame ->
+                            OverlayView.OverlayRenderModel(
+                                blocks = overlayFrame.blocks.map { block ->
+                                    OverlayView.OverlayBlock(
+                                        text = block.text,
+                                        sourceBoundingBox = block.sourceBoundingBox,
+                                        isAllergen = block.isAllergen
+                                    )
+                                },
+                                sourceWidth = overlayFrame.sourceWidth,
+                                sourceHeight = overlayFrame.sourceHeight,
+                                isFrontCamera = overlayFrame.isFrontCamera
+                            )
+                        }
+                    )
+
                     if (state.showStatus && state.statusMessageResId != null) {
                         binding.textCameraStatus.text = if (
                             state.statusMessageResId == R.string.camera_detected_allergens &&
@@ -133,7 +153,8 @@ class CameraScanActivity : AppCompatActivity() {
                             callbackExecutor = ContextCompat.getMainExecutor(this),
                             onTextRecognized = viewModel::onTextRecognized,
                             onOcrError = viewModel::onOcrError,
-                            processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES
+                            processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES,
+                            isFrontCamera = false
                         )
                         it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }

@@ -13,9 +13,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class CameraFrameAnalyzer(
     private val callbackExecutor: Executor,
-    private val onTextRecognized: (String) -> Unit,
+    private val onTextRecognized: (OcrFrameData) -> Unit,
     private val onOcrError: () -> Unit,
-    private val processEveryNFrames: Int = 1
+    private val processEveryNFrames: Int = 1,
+    private val isFrontCamera: Boolean = false
 ) : ImageAnalysis.Analyzer, Closeable {
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val isProcessingFrame = AtomicBoolean(false)
@@ -44,7 +45,26 @@ class CameraFrameAnalyzer(
         textRecognizer
             .process(inputImage)
             .addOnSuccessListener(callbackExecutor) { visionText ->
-                onTextRecognized(visionText.text)
+                val rotation = image.imageInfo.rotationDegrees
+                val sourceWidth = if (rotation % 180 == 0) image.width else image.height
+                val sourceHeight = if (rotation % 180 == 0) image.height else image.width
+                val blocks = visionText.textBlocks.mapNotNull { block ->
+                    val bounding = block.boundingBox ?: return@mapNotNull null
+                    OcrTextBlock(
+                        text = block.text,
+                        boundingBox = bounding
+                    )
+                }
+
+                onTextRecognized(
+                    OcrFrameData(
+                        fullText = visionText.text,
+                        textBlocks = blocks,
+                        sourceWidth = sourceWidth,
+                        sourceHeight = sourceHeight,
+                        isFrontCamera = isFrontCamera
+                    )
+                )
             }
             .addOnFailureListener(callbackExecutor) { error ->
                 Log.e(TAG, "OCR analysis failed", error)
