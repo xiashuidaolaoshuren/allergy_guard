@@ -8,17 +8,25 @@ import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AllergenRepository
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class CameraScanViewModel(
-    private val repository: AllergenRepository
+    private val repository: AllergenRepository,
+    private val alertCooldownMs: Long = DEFAULT_ALERT_COOLDOWN_MS,
+    private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CameraUiState())
     val uiState: StateFlow<CameraUiState> = _uiState.asStateFlow()
+    private val _allergenAlertEvents = MutableSharedFlow<AllergenAlertEvent>(extraBufferCapacity = 1)
+    val allergenAlertEvents: SharedFlow<AllergenAlertEvent> = _allergenAlertEvents.asSharedFlow()
     private var enabledAllergenNames: List<String> = emptyList()
+    private var lastAlertTimestampMs: Long = Long.MIN_VALUE
 
     init {
         viewModelScope.launch {
@@ -76,6 +84,8 @@ class CameraScanViewModel(
             return
         }
 
+        maybeEmitAllergenAlert(matchedAllergens)
+
         _uiState.value = CameraUiState(
             showStatus = true,
             statusMessageResId = R.string.camera_detected_allergens,
@@ -86,6 +96,20 @@ class CameraScanViewModel(
 
     fun onOcrError() {
         _uiState.value = CameraUiState(showStatus = true, statusMessageResId = R.string.camera_ocr_error)
+    }
+
+    private fun maybeEmitAllergenAlert(matchedAllergens: List<String>) {
+        val nowMs = nowProvider()
+        if (!shouldEmitAlert(nowMs, lastAlertTimestampMs, alertCooldownMs)) {
+            return
+        }
+
+        lastAlertTimestampMs = nowMs
+        _allergenAlertEvents.tryEmit(
+            AllergenAlertEvent(
+                detectedAllergens = matchedAllergens.distinct()
+            )
+        )
     }
 
     data class CameraUiState(
@@ -108,6 +132,10 @@ class CameraScanViewModel(
         val isFrontCamera: Boolean
     )
 
+    data class AllergenAlertEvent(
+        val detectedAllergens: List<String>
+    )
+
     class Factory(
         private val repository: AllergenRepository
     ) : ViewModelProvider.Factory {
@@ -117,6 +145,18 @@ class CameraScanViewModel(
                 return CameraScanViewModel(repository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        }
+    }
+
+    companion object {
+        private const val DEFAULT_ALERT_COOLDOWN_MS = 4_000L
+
+        internal fun shouldEmitAlert(nowMs: Long, lastAlertMs: Long, cooldownMs: Long): Boolean {
+            val validCooldownMs = cooldownMs.coerceAtLeast(0L)
+            if (lastAlertMs == Long.MIN_VALUE) {
+                return true
+            }
+            return nowMs - lastAlertMs >= validCooldownMs
         }
     }
 }

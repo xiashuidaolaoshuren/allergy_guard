@@ -41,7 +41,7 @@
 - [x] Logic for color-coded feedback:
     - [x] **Red** box/text for detected allergen
     - [x] **Green** indicator for "Safe" scan completion
-- [ ] Add clear alert notification when an allergen is found
+- [x] Add clear alert notification when an allergen is found
 
 ## Phase 7: History & Results
 - [ ] Create `HistoryActivity/Fragment`

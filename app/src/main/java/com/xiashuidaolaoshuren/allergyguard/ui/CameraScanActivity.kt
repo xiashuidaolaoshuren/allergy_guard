@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -18,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AppDatabase
 import com.xiashuidaolaoshuren.allergyguard.data.RoomAllergenRepository
@@ -38,6 +40,7 @@ class CameraScanActivity : AppCompatActivity() {
     }
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null
+    private var allergenAlertDialog: AlertDialog? = null
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -64,6 +67,8 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        allergenAlertDialog?.dismiss()
+        allergenAlertDialog = null
         frameAnalyzer?.close()
         frameAnalyzer = null
         cameraExecutor.shutdown()
@@ -81,43 +86,69 @@ class CameraScanActivity : AppCompatActivity() {
     private fun observeUiState() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    binding.overlayViewCamera.render(
-                        state.overlayFrame?.let { overlayFrame ->
-                            OverlayView.OverlayRenderModel(
-                                blocks = overlayFrame.blocks.map { block ->
-                                    OverlayView.OverlayBlock(
-                                        text = block.text,
-                                        sourceBoundingBox = block.sourceBoundingBox,
-                                        isAllergen = block.isAllergen
-                                    )
-                                },
-                                sourceWidth = overlayFrame.sourceWidth,
-                                sourceHeight = overlayFrame.sourceHeight,
-                                isFrontCamera = overlayFrame.isFrontCamera
-                            )
-                        }
-                    )
+                launch {
+                    viewModel.uiState.collect { state ->
+                        binding.overlayViewCamera.render(
+                            state.overlayFrame?.let { overlayFrame ->
+                                OverlayView.OverlayRenderModel(
+                                    blocks = overlayFrame.blocks.map { block ->
+                                        OverlayView.OverlayBlock(
+                                            text = block.text,
+                                            sourceBoundingBox = block.sourceBoundingBox,
+                                            isAllergen = block.isAllergen
+                                        )
+                                    },
+                                    sourceWidth = overlayFrame.sourceWidth,
+                                    sourceHeight = overlayFrame.sourceHeight,
+                                    isFrontCamera = overlayFrame.isFrontCamera
+                                )
+                            }
+                        )
 
-                    if (state.showStatus && state.statusMessageResId != null) {
-                        binding.textCameraStatus.text = if (
-                            state.statusMessageResId == R.string.camera_detected_allergens &&
-                            state.detectedAllergens.isNotEmpty()
-                        ) {
-                            getString(
-                                state.statusMessageResId,
-                                state.detectedAllergens.joinToString(separator = ", ")
-                            )
+                        if (state.showStatus && state.statusMessageResId != null) {
+                            binding.textCameraStatus.text = if (
+                                state.statusMessageResId == R.string.camera_detected_allergens &&
+                                state.detectedAllergens.isNotEmpty()
+                            ) {
+                                getString(
+                                    state.statusMessageResId,
+                                    state.detectedAllergens.joinToString(separator = ", ")
+                                )
+                            } else {
+                                getString(state.statusMessageResId)
+                            }
+                            binding.textCameraStatus.visibility = android.view.View.VISIBLE
                         } else {
-                            getString(state.statusMessageResId)
+                            binding.textCameraStatus.visibility = android.view.View.GONE
                         }
-                        binding.textCameraStatus.visibility = android.view.View.VISIBLE
-                    } else {
-                        binding.textCameraStatus.visibility = android.view.View.GONE
+                    }
+                }
+
+                launch {
+                    viewModel.allergenAlertEvents.collect { event ->
+                        showAllergenAlertDialog(event.detectedAllergens)
                     }
                 }
             }
         }
+    }
+
+    private fun showAllergenAlertDialog(detectedAllergens: List<String>) {
+        if (detectedAllergens.isEmpty()) {
+            return
+        }
+
+        val allergenList = detectedAllergens.joinToString(separator = ", ")
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.camera_allergen_alert_title)
+            .setMessage(getString(R.string.camera_allergen_alert_message, allergenList))
+            .setCancelable(true)
+            .setPositiveButton(R.string.action_ok, null)
+            .create()
+
+        allergenAlertDialog?.dismiss()
+        allergenAlertDialog = dialog
+        dialog.show()
     }
 
     private fun ensureCameraPermissionAndStart() {
