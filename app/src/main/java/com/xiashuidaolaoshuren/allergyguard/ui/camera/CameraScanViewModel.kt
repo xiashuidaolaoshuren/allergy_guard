@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AllergenRepository
+import com.xiashuidaolaoshuren.allergyguard.data.ScanHistoryRepository
+import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,9 +17,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class CameraScanViewModel(
     private val repository: AllergenRepository,
+    private val scanHistoryRepository: ScanHistoryRepository,
     private val alertCooldownMs: Long = DEFAULT_ALERT_COOLDOWN_MS,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
@@ -27,6 +31,9 @@ class CameraScanViewModel(
     val allergenAlertEvents: SharedFlow<AllergenAlertEvent> = _allergenAlertEvents.asSharedFlow()
     private var enabledAllergenNames: List<String> = emptyList()
     private var lastAlertTimestampMs: Long = Long.MIN_VALUE
+    private var lastSavedTimestampMs: Long = Long.MIN_VALUE
+    private var lastSavedNormalizedText: String = ""
+    private var lastSavedHasAllergens: Boolean = false
 
     init {
         viewModelScope.launch {
@@ -76,6 +83,7 @@ class CameraScanViewModel(
         )
 
         if (matchedAllergens.isEmpty()) {
+            maybePersistScanResult(frameData.fullText, hasAllergens = false)
             _uiState.value = CameraUiState(
                 showStatus = true,
                 statusMessageResId = R.string.camera_no_allergens_found,
@@ -85,6 +93,7 @@ class CameraScanViewModel(
         }
 
         maybeEmitAllergenAlert(matchedAllergens)
+        maybePersistScanResult(frameData.fullText, hasAllergens = true)
 
         _uiState.value = CameraUiState(
             showStatus = true,
@@ -92,6 +101,39 @@ class CameraScanViewModel(
             detectedAllergens = matchedAllergens,
             overlayFrame = overlayFrame
         )
+    }
+
+    private fun maybePersistScanResult(rawText: String, hasAllergens: Boolean) {
+        val normalized = rawText.trim().replace(Regex("\\s+"), " ")
+        if (normalized.isBlank()) {
+            return
+        }
+
+        val nowMs = nowProvider()
+        val saveAllowedByCooldown = lastSavedTimestampMs == Long.MIN_VALUE ||
+            nowMs - lastSavedTimestampMs >= SAVE_SCAN_COOLDOWN_MS
+        val changedSinceLastSave =
+            normalized != lastSavedNormalizedText || hasAllergens != lastSavedHasAllergens
+
+        if (!saveAllowedByCooldown && !changedSinceLastSave) {
+            return
+        }
+
+        lastSavedTimestampMs = nowMs
+        lastSavedNormalizedText = normalized
+        lastSavedHasAllergens = hasAllergens
+
+        viewModelScope.launch {
+            scanHistoryRepository.insertScanResult(
+                ScanResult(
+                    id = UUID.randomUUID().toString(),
+                    timestamp = nowMs,
+                    textContent = normalized,
+                    hasAllergens = hasAllergens,
+                    location = null
+                )
+            )
+        }
     }
 
     fun onOcrError() {
@@ -137,12 +179,13 @@ class CameraScanViewModel(
     )
 
     class Factory(
-        private val repository: AllergenRepository
+        private val repository: AllergenRepository,
+        private val scanHistoryRepository: ScanHistoryRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(CameraScanViewModel::class.java)) {
-                return CameraScanViewModel(repository) as T
+                return CameraScanViewModel(repository, scanHistoryRepository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
@@ -150,6 +193,7 @@ class CameraScanViewModel(
 
     companion object {
         private const val DEFAULT_ALERT_COOLDOWN_MS = 4_000L
+        private const val SAVE_SCAN_COOLDOWN_MS = 5_000L
 
         internal fun shouldEmitAlert(nowMs: Long, lastAlertMs: Long, cooldownMs: Long): Boolean {
             val validCooldownMs = cooldownMs.coerceAtLeast(0L)

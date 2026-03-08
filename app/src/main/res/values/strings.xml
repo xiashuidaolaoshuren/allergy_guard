@@ -2,7 +2,12 @@
     <string name="app_name">Allergy Guard</string>
     <string name="start_scan">Start Scan</string>
     <string name="manage_allergens">Manage Allergens</string>
+    <string name="view_scan_history">View Scan History</string>
     <string name="allergen_list_title">Allergens</string>
+    <string name="history_title">Scan History</string>
+    <string name="history_empty">No scans yet. Start a scan to build your history.</string>
+    <string name="history_status_allergen_detected">Allergen Found</string>
+    <string name="history_status_safe">Safe</string>
     <string name="camera_scan_title">Scan Label</string>
     <string name="camera_permission_denied">Camera permission is required to scan labels.</string>
     <string name="camera_initialization_error">Unable to initialize camera. Please try again.</string>

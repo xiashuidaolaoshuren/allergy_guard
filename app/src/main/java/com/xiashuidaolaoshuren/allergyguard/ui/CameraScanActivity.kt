@@ -23,6 +23,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AppDatabase
 import com.xiashuidaolaoshuren.allergyguard.data.RoomAllergenRepository
+import com.xiashuidaolaoshuren.allergyguard.data.RoomScanHistoryRepository
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityCameraScanBinding
 import com.xiashuidaolaoshuren.allergyguard.logic.CameraFrameAnalyzer
 import com.xiashuidaolaoshuren.allergyguard.ui.camera.CameraScanViewModel
@@ -34,9 +35,10 @@ import java.util.concurrent.Executors
 class CameraScanActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraScanBinding
     private val viewModel: CameraScanViewModel by viewModels {
-        val allergenDao = AppDatabase.getInstance(applicationContext).allergenDao()
-        val repository = RoomAllergenRepository(allergenDao)
-        CameraScanViewModel.Factory(repository)
+        val database = AppDatabase.getInstance(applicationContext)
+        val allergenRepository = RoomAllergenRepository(database.allergenDao())
+        val scanHistoryRepository = RoomScanHistoryRepository(database.scanHistoryDao())
+        CameraScanViewModel.Factory(allergenRepository, scanHistoryRepository)
     }
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null

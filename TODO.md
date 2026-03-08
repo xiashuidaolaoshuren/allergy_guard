@@ -44,8 +44,8 @@
 - [x] Add clear alert notification when an allergen is found
 
 ## Phase 7: History & Results
-- [ ] Create `HistoryActivity/Fragment`
-- [ ] Implement list of previous scans with timestamps
+- [x] Create `HistoryActivity/Fragment`
+- [x] Implement list of previous scans with timestamps
 - [ ] (Optional) Map integration for scan locations
 
 ## Phase 8: Refinement & Testing

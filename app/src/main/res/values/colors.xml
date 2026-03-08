@@ -2,4 +2,6 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="scan_alert_red">#C62828</color>
+    <color name="scan_safe_green">#2E7D32</color>
 </resources>
