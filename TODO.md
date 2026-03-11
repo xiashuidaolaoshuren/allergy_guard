@@ -48,7 +48,14 @@
 - [x] Implement list of previous scans with timestamps
 - [ ] (Optional) Map integration for scan locations
 
-## Phase 8: Refinement & Testing
+## Phase 8: On-Device Translation Integration
+- [ ] Add ML Kit Translation dependency to `libs.versions.toml` and `build.gradle.kts`
+- [ ] Implement `TranslatorManager` to handle model downloads and lifecycle
+- [ ] Integrate Language Identification (ML Kit) to detect source language
+- [ ] Wire translation into the `ImageAnalysis.Analyzer` pipeline before allergen matching
+- [ ] Add UI indicators to show if text is being translated in real-time
+
+## Phase 9: Refinement & Testing
 - [ ] Performance profiling (memory usage during OCR)
 - [ ] UI Polish (Logo, theme, animations)
 - [ ] Test with physical food labels under varied lighting

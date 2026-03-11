@@ -5,6 +5,9 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.io.Closeable
 import java.util.concurrent.Executor
@@ -16,9 +19,17 @@ class CameraFrameAnalyzer(
     private val onTextRecognized: (OcrFrameData) -> Unit,
     private val onOcrError: () -> Unit,
     private val processEveryNFrames: Int = 1,
-    private val isFrontCamera: Boolean = false
+    private val isFrontCamera: Boolean = false,
+    private val script: OcrScript = OcrScript.LATIN
 ) : ImageAnalysis.Analyzer, Closeable {
-    private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val textRecognizer = TextRecognition.getClient(
+        when (script) {
+            OcrScript.LATIN -> TextRecognizerOptions.DEFAULT_OPTIONS
+            OcrScript.CHINESE -> ChineseTextRecognizerOptions.Builder().build()
+            OcrScript.JAPANESE -> JapaneseTextRecognizerOptions.Builder().build()
+            OcrScript.KOREAN -> KoreanTextRecognizerOptions.Builder().build()
+        }
+    )
     private val isProcessingFrame = AtomicBoolean(false)
     private val frameCounter = AtomicInteger(0)
 

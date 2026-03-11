@@ -17,6 +17,11 @@
     <string name="camera_ocr_error">Unable to read text from camera frame.</string>
     <string name="camera_allergen_alert_title">Allergen Alert</string>
     <string name="camera_allergen_alert_message">Potential allergen detected: %1$s</string>
+    <string name="camera_script_selector_title">OCR Script</string>
+    <string name="camera_script_latin">Latin</string>
+    <string name="camera_script_chinese">Chinese</string>
+    <string name="camera_script_japanese">Japanese</string>
+    <string name="camera_script_korean">Korean</string>
     <string name="add_custom_allergen">Add Custom Allergen</string>
     <string name="custom_allergen_name_hint">Allergen name</string>
     <string name="action_add">Add</string>
