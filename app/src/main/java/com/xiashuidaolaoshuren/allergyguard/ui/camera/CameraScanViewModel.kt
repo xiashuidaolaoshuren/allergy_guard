@@ -10,6 +10,9 @@ import com.xiashuidaolaoshuren.allergyguard.data.ScanHistoryRepository
 import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
+import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
+import com.google.mlkit.nl.languageid.LanguageIdentifier
+import com.google.mlkit.nl.translate.TranslateLanguage
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import java.util.UUID
 
 class CameraScanViewModel(
@@ -34,6 +39,8 @@ class CameraScanViewModel(
     private var lastSavedTimestampMs: Long = Long.MIN_VALUE
     private var lastSavedNormalizedText: String = ""
     private var lastSavedHasAllergens: Boolean = false
+
+    private var isProcessing = false
 
     init {
         viewModelScope.launch {
@@ -62,45 +69,81 @@ class CameraScanViewModel(
     }
 
     fun onTextRecognized(frameData: OcrFrameData) {
+        if (isProcessing) return
         if (frameData.fullText.isBlank()) {
             _uiState.value = CameraUiState(showStatus = true, statusMessageResId = R.string.camera_scanning)
             return
         }
 
-        val matchedAllergens = AllergenTextMatcher.findMatches(frameData.fullText, enabledAllergenNames)
-        val overlayBlocks = frameData.textBlocks.map { block ->
-            OverlayBlockUi(
-                text = block.text,
-                sourceBoundingBox = block.boundingBox,
-                isAllergen = AllergenTextMatcher.findMatches(block.text, enabledAllergenNames).isNotEmpty()
-            )
+        viewModelScope.launch {
+            isProcessing = true
+            try {
+                // Determine if we need translation
+                val sourceLang = TranslationManager.identifyLanguage(frameData.fullText)
+                val needsTranslation = sourceLang != TranslateLanguage.ENGLISH && 
+                                       sourceLang != "und"
+
+                var currentText = frameData.fullText
+
+                if (needsTranslation) {
+                    _uiState.value = _uiState.value.copy(
+                        statusMessageResId = R.string.translation_status_downloading
+                    )
+                    val translated = TranslationManager.translateText(frameData.fullText, sourceLang)
+                    if (translated != null) {
+                        currentText = translated
+                    } else {
+                        // Model missing? Prompt to download or just continue with raw
+                        _uiState.value = _uiState.value.copy(
+                            statusMessageResId = R.string.translation_status_downloading
+                        )
+                        // Trigger async download (non-blocking for this frame)
+                        TranslationManager.downloadModel(sourceLang)
+                    }
+                }
+
+                val matchedAllergens = AllergenTextMatcher.findMatches(currentText, enabledAllergenNames)
+                
+                // For overlays, we still show the original text blocks but check visibility against English matches 
+                // if we translated. This is a simplification.
+                val overlayBlocks = frameData.textBlocks.map { block ->
+                    OverlayBlockUi(
+                        text = block.text,
+                        sourceBoundingBox = block.boundingBox,
+                        isAllergen = AllergenTextMatcher.findMatches(block.text, enabledAllergenNames).isNotEmpty() ||
+                                    (needsTranslation && matchedAllergens.isNotEmpty()) // Heuristic: if any allergen found in full translated text, mark blocks
+                    )
+                }
+                
+                val overlayFrame = OverlayFrameUi(
+                    blocks = overlayBlocks,
+                    sourceWidth = frameData.sourceWidth,
+                    sourceHeight = frameData.sourceHeight,
+                    isFrontCamera = frameData.isFrontCamera
+                )
+
+                if (matchedAllergens.isEmpty()) {
+                    maybePersistScanResult(currentText, hasAllergens = false)
+                    _uiState.value = CameraUiState(
+                        showStatus = true,
+                        statusMessageResId = if (needsTranslation) R.string.camera_no_allergens_found else R.string.camera_no_allergens_found,
+                        overlayFrame = overlayFrame
+                    )
+                } else {
+                    maybeEmitAllergenAlert(matchedAllergens)
+                    maybePersistScanResult(currentText, hasAllergens = true)
+
+                    _uiState.value = CameraUiState(
+                        showStatus = true,
+                        statusMessageResId = R.string.camera_detected_allergens,
+                        detectedAllergens = matchedAllergens,
+                        overlayFrame = overlayFrame
+                    )
+                }
+            } finally {
+                isProcessing = false
+            }
         }
-        val overlayFrame = OverlayFrameUi(
-            blocks = overlayBlocks,
-            sourceWidth = frameData.sourceWidth,
-            sourceHeight = frameData.sourceHeight,
-            isFrontCamera = frameData.isFrontCamera
-        )
-
-        if (matchedAllergens.isEmpty()) {
-            maybePersistScanResult(frameData.fullText, hasAllergens = false)
-            _uiState.value = CameraUiState(
-                showStatus = true,
-                statusMessageResId = R.string.camera_no_allergens_found,
-                overlayFrame = overlayFrame
-            )
-            return
-        }
-
-        maybeEmitAllergenAlert(matchedAllergens)
-        maybePersistScanResult(frameData.fullText, hasAllergens = true)
-
-        _uiState.value = CameraUiState(
-            showStatus = true,
-            statusMessageResId = R.string.camera_detected_allergens,
-            detectedAllergens = matchedAllergens,
-            overlayFrame = overlayFrame
-        )
     }
 
     private fun maybePersistScanResult(rawText: String, hasAllergens: Boolean) {

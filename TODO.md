@@ -49,11 +49,12 @@
 - [ ] (Optional) Map integration for scan locations
 
 ## Phase 8: On-Device Translation Integration
-- [ ] Add ML Kit Translation dependency to `libs.versions.toml` and `build.gradle.kts`
-- [ ] Implement `TranslatorManager` to handle model downloads and lifecycle
-- [ ] Integrate Language Identification (ML Kit) to detect source language
-- [ ] Wire translation into the `ImageAnalysis.Analyzer` pipeline before allergen matching
-- [ ] Add UI indicators to show if text is being translated in real-time
+- [x] Add ML Kit Translation dependency to `libs.versions.toml` and `build.gradle.kts`
+- [x] Implement `TranslationManager` to handle model downloads and lifecycle
+- [x] Create `TranslationSettingsActivity` for manual model management
+- [x] Integrate Language Identification (ML Kit) to detect source language
+- [x] Wire translation into the `ImageAnalysis.Analyzer` pipeline before allergen matching
+- [x] Add UI indicators to show if text is being translated in real-time
 
 ## Phase 9: Refinement & Testing
 - [ ] Performance profiling (memory usage during OCR)
