@@ -54,6 +54,8 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.language.id)
+    implementation(libs.mlkit.translate)
     implementation(libs.play.services.mlkit.text.recognition.chinese)
     implementation(libs.play.services.mlkit.text.recognition.japanese)
     implementation(libs.play.services.mlkit.text.recognition.korean)

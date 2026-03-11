@@ -24,6 +24,9 @@
             android:name=".ui.CameraScanActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.TranslationSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.HistoryActivity"
             android:exported="false" />
         <activity

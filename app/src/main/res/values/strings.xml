@@ -22,11 +22,21 @@
     <string name="camera_script_chinese">Chinese</string>
     <string name="camera_script_japanese">Japanese</string>
     <string name="camera_script_korean">Korean</string>
+    <string name="camera_translation_settings">Translation Settings</string>
     <string name="add_custom_allergen">Add Custom Allergen</string>
     <string name="custom_allergen_name_hint">Allergen name</string>
     <string name="action_add">Add</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
+    <string name="translation_settings_title">Translation Models</string>
+    <string name="translation_settings_hint">Pre-download language models for faster offline scanning.</string>
+    <string name="translation_status_not_downloaded">Not downloaded</string>
+    <string name="translation_status_downloading">Downloading...</string>
+    <string name="translation_status_downloaded">Ready</string>
+    <string name="translation_action_download">Download</string>
+    <string name="translation_action_downloading">Downloading...</string>
+    <string name="translation_action_ready">Ready</string>
+    <string name="translation_download_failed">Failed to download %1$s model. %2$s</string>
     <string name="error_custom_allergen_blank">Please enter an allergen name.</string>
     <string name="error_custom_allergen_duplicate">This allergen already exists.</string>
 </resources>

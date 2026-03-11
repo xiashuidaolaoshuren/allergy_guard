@@ -1,6 +1,7 @@
 package com.xiashuidaolaoshuren.allergyguard.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -65,6 +66,9 @@ class CameraScanActivity : AppCompatActivity() {
         selectedScript = loadSelectedScript()
         binding.buttonScriptSelector.setOnClickListener {
             showScriptPicker()
+        }
+        binding.buttonTranslationSettings.setOnClickListener {
+            startActivity(Intent(this, TranslationSettingsActivity::class.java))
         }
         updateScriptButtonLabel()
 
