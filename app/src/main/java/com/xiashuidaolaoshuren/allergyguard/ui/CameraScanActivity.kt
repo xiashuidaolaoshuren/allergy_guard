@@ -68,7 +68,7 @@ class CameraScanActivity : AppCompatActivity() {
             showScriptPicker()
         }
         binding.buttonTranslationSettings.setOnClickListener {
-            startActivity(Intent(this, TranslationSettingsActivity::class.java))
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
         updateScriptButtonLabel()
 

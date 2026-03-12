@@ -8,13 +8,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.xiashuidaolaoshuren.allergyguard.R
-import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityTranslationSettingsBinding
+import com.xiashuidaolaoshuren.allergyguard.databinding.ActivitySettingsBinding
 import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
 import com.xiashuidaolaoshuren.allergyguard.ui.translation.TranslationLanguageAdapter
 import com.xiashuidaolaoshuren.allergyguard.ui.translation.TranslationLanguageUiModel
 
-class TranslationSettingsActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityTranslationSettingsBinding
+class SettingsActivity : AppCompatActivity() {
+    private lateinit var binding: ActivitySettingsBinding
     private lateinit var adapter: TranslationLanguageAdapter
     private var languageItems: List<TranslationLanguageUiModel> = emptyList()
 
@@ -22,17 +22,17 @@ class TranslationSettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        binding = ActivityTranslationSettingsBinding.inflate(layoutInflater)
+        binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        title = getString(R.string.translation_settings_title)
+        title = "Settings"
         setupInsets()
         setupRecyclerView()
         loadLanguages()
     }
 
     private fun setupInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.translationSettingsRoot) { view, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.settingsRoot) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -57,8 +57,8 @@ class TranslationSettingsActivity : AppCompatActivity() {
         }
 
         binding.recyclerTranslationLanguages.apply {
-            layoutManager = LinearLayoutManager(this@TranslationSettingsActivity)
-            adapter = this@TranslationSettingsActivity.adapter
+            layoutManager = LinearLayoutManager(this@SettingsActivity)
+            adapter = this@SettingsActivity.adapter
         }
     }
 
@@ -68,6 +68,7 @@ class TranslationSettingsActivity : AppCompatActivity() {
             TranslationLanguageUiModel(
                 languageTag = it.languageTag,
                 displayName = it.displayName,
+                flagEmoji = it.flagEmoji,
                 isDownloaded = false,
                 isDownloading = false
             )

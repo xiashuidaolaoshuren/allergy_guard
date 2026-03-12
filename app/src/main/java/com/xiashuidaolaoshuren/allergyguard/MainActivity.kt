@@ -10,6 +10,7 @@ import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityMainBinding
 import com.xiashuidaolaoshuren.allergyguard.ui.AllergenListActivity
 import com.xiashuidaolaoshuren.allergyguard.ui.CameraScanActivity
 import com.xiashuidaolaoshuren.allergyguard.ui.HistoryActivity
+import com.xiashuidaolaoshuren.allergyguard.ui.SettingsActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -36,6 +37,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.buttonViewHistory.setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
+        }
+
+        binding.buttonSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 }

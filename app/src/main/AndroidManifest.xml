@@ -24,10 +24,10 @@
             android:name=".ui.CameraScanActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.TranslationSettingsActivity"
+            android:name=".ui.HistoryActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.HistoryActivity"
+            android:name=".ui.SettingsActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

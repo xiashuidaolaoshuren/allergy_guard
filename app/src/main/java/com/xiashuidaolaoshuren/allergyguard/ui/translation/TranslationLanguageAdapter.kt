@@ -11,6 +11,7 @@ import com.xiashuidaolaoshuren.allergyguard.databinding.ItemTranslationLanguageB
 data class TranslationLanguageUiModel(
     val languageTag: String,
     val displayName: String,
+    val flagEmoji: String,
     val isDownloaded: Boolean,
     val isDownloading: Boolean
 )
@@ -38,6 +39,7 @@ class TranslationLanguageAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: TranslationLanguageUiModel) {
+            binding.textTranslationLanguageFlag.text = item.flagEmoji
             binding.textTranslationLanguageName.text = item.displayName
             binding.textTranslationLanguageStatus.text = when {
                 item.isDownloading -> binding.root.context.getString(R.string.translation_status_downloading)

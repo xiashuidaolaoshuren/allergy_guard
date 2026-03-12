@@ -15,7 +15,8 @@ import kotlinx.coroutines.tasks.await
 
 data class TranslationLanguageOption(
     val displayName: String,
-    val languageTag: String
+    val languageTag: String,
+    val flagEmoji: String
 )
 
 object TranslationManager {
@@ -56,9 +57,9 @@ object TranslationManager {
 
     fun supportedLanguages(): List<TranslationLanguageOption> {
         return listOf(
-            TranslationLanguageOption("Chinese", TranslateLanguage.CHINESE),
-            TranslationLanguageOption("Japanese", TranslateLanguage.JAPANESE),
-            TranslationLanguageOption("Korean", TranslateLanguage.KOREAN)
+            TranslationLanguageOption("Chinese", TranslateLanguage.CHINESE, "🇨🇳"),
+            TranslationLanguageOption("Japanese", TranslateLanguage.JAPANESE, "🇯🇵"),
+            TranslationLanguageOption("Korean", TranslateLanguage.KOREAN, "🇰🇷")
         )
     }
 
