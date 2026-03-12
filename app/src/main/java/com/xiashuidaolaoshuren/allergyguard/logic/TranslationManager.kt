@@ -57,8 +57,16 @@ object TranslationManager {
 
     fun supportedLanguages(): List<TranslationLanguageOption> {
         return listOf(
+            TranslationLanguageOption("English", TranslateLanguage.ENGLISH, "🇬🇧"),
             TranslationLanguageOption("Chinese", TranslateLanguage.CHINESE, "🇨🇳"),
+            TranslationLanguageOption("Spanish", TranslateLanguage.SPANISH, "🇪🇸"),
+            TranslationLanguageOption("Hindi", TranslateLanguage.HINDI, "🇮🇳"),
+            TranslationLanguageOption("Arabic", TranslateLanguage.ARABIC, "🇸🇦"),
+            TranslationLanguageOption("Portuguese", TranslateLanguage.PORTUGUESE, "🇵🇹"),
+            TranslationLanguageOption("Russian", TranslateLanguage.RUSSIAN, "🇷🇺"),
             TranslationLanguageOption("Japanese", TranslateLanguage.JAPANESE, "🇯🇵"),
+            TranslationLanguageOption("French", TranslateLanguage.FRENCH, "🇫🇷"),
+            TranslationLanguageOption("German", TranslateLanguage.GERMAN, "🇩🇪"),
             TranslationLanguageOption("Korean", TranslateLanguage.KOREAN, "🇰🇷")
         )
     }
