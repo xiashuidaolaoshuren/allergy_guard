@@ -3,11 +3,14 @@
     <string name="start_scan">Start Scan</string>
     <string name="manage_allergens">Manage Allergens</string>
     <string name="view_scan_history">View Scan History</string>
+    <string name="view_scan_map">View Scan Map</string>
     <string name="allergen_list_title">Allergens</string>
     <string name="history_title">Scan History</string>
     <string name="history_empty">No scans yet. Start a scan to build your history.</string>
     <string name="history_status_allergen_detected">Allergen Found</string>
     <string name="history_status_safe">Safe</string>
+    <string name="history_location_unknown">Location unavailable</string>
+    <string name="history_location_format">Lat %1$.5f, Lng %2$.5f</string>
     <string name="camera_scan_title">Scan Label</string>
     <string name="camera_permission_denied">Camera permission is required to scan labels.</string>
     <string name="camera_initialization_error">Unable to initialize camera. Please try again.</string>
@@ -23,6 +26,11 @@
     <string name="camera_script_japanese">Japanese</string>
     <string name="camera_script_korean">Korean</string>
     <string name="camera_translation_settings">Translation Settings</string>
+    <string name="location_permission_denied_optional">Location permission denied. Scans will still be saved without location.</string>
+    <string name="map_title">Scan Map</string>
+    <string name="map_empty">No scans with location data yet.</string>
+    <string name="map_filter_all">All scans</string>
+    <string name="map_filter_allergens">Allergen only</string>
     <string name="add_custom_allergen">Add Custom Allergen</string>
     <string name="custom_allergen_name_hint">Allergen name</string>
     <string name="action_add">Add</string>

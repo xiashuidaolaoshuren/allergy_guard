@@ -1,5 +1,6 @@
 package com.xiashuidaolaoshuren.allergyguard.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
@@ -51,11 +52,25 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        historyAdapter = ScanHistoryAdapter()
+        historyAdapter = ScanHistoryAdapter { scanResult ->
+            openMap(selectedScanId = scanResult.id)
+        }
         binding.recyclerHistory.apply {
             layoutManager = LinearLayoutManager(this@HistoryActivity)
             adapter = historyAdapter
         }
+
+        binding.buttonViewMap.setOnClickListener {
+            openMap(selectedScanId = null)
+        }
+    }
+
+    private fun openMap(selectedScanId: String?) {
+        val intent = Intent(this, MapActivity::class.java)
+        if (!selectedScanId.isNullOrBlank()) {
+            intent.putExtra(MapActivity.EXTRA_SELECTED_SCAN_ID, selectedScanId)
+        }
+        startActivity(intent)
     }
 
     private fun observeScanHistory() {

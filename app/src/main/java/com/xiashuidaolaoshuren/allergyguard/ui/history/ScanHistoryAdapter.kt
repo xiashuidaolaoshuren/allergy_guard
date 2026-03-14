@@ -8,17 +8,20 @@ import androidx.recyclerview.widget.RecyclerView
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
 import com.xiashuidaolaoshuren.allergyguard.databinding.ItemScanHistoryBinding
+import com.xiashuidaolaoshuren.allergyguard.logic.ScanLocationCodec
 import java.text.DateFormat
 import java.util.Date
 
-class ScanHistoryAdapter : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistoryViewHolder>(DiffCallback) {
+class ScanHistoryAdapter(
+    private val onItemClick: (ScanResult) -> Unit
+) : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistoryViewHolder>(DiffCallback) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScanHistoryViewHolder {
         val binding = ItemScanHistoryBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
         )
-        return ScanHistoryViewHolder(binding)
+        return ScanHistoryViewHolder(binding, onItemClick)
     }
 
     override fun onBindViewHolder(holder: ScanHistoryViewHolder, position: Int) {
@@ -26,7 +29,8 @@ class ScanHistoryAdapter : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistor
     }
 
     class ScanHistoryViewHolder(
-        private val binding: ItemScanHistoryBinding
+        private val binding: ItemScanHistoryBinding,
+        private val onItemClick: (ScanResult) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
         private val dateFormat: DateFormat = DateFormat.getDateTimeInstance(
             DateFormat.SHORT,
@@ -42,6 +46,14 @@ class ScanHistoryAdapter : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistor
             } else {
                 context.getString(R.string.history_status_safe)
             }
+
+            val coordinate = ScanLocationCodec.decode(scanResult.location)
+            binding.textScanLocation.text = if (coordinate != null) {
+                context.getString(R.string.history_location_format, coordinate.latitude, coordinate.longitude)
+            } else {
+                context.getString(R.string.history_location_unknown)
+            }
+
             binding.textScanStatus.setTextColor(
                 if (scanResult.hasAllergens) {
                     context.getColor(R.color.scan_alert_red)
@@ -49,6 +61,10 @@ class ScanHistoryAdapter : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistor
                     context.getColor(R.color.scan_safe_green)
                 }
             )
+
+            binding.root.setOnClickListener {
+                onItemClick(scanResult)
+            }
         }
     }
 

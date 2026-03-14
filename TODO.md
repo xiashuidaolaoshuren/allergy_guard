@@ -46,7 +46,7 @@
 ## Phase 7: History & Results
 - [x] Create `HistoryActivity/Fragment`
 - [x] Implement list of previous scans with timestamps
-- [ ] (Optional) Map integration for scan locations
+- [x] (Optional) Map integration for scan locations
 
 ## Phase 8: On-Device Translation Integration
 - [x] Add ML Kit Translation dependency to `libs.versions.toml` and `build.gradle.kts`

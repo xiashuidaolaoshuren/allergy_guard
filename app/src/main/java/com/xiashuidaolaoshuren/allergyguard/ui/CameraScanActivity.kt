@@ -27,6 +27,7 @@ import com.xiashuidaolaoshuren.allergyguard.data.RoomAllergenRepository
 import com.xiashuidaolaoshuren.allergyguard.data.RoomScanHistoryRepository
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityCameraScanBinding
 import com.xiashuidaolaoshuren.allergyguard.logic.CameraFrameAnalyzer
+import com.xiashuidaolaoshuren.allergyguard.logic.DeviceLocationProvider
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrScript
 import com.xiashuidaolaoshuren.allergyguard.ui.camera.CameraScanViewModel
 import com.xiashuidaolaoshuren.allergyguard.ui.camera.OverlayView
@@ -36,11 +37,18 @@ import java.util.concurrent.Executors
 
 class CameraScanActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraScanBinding
+    private val deviceLocationProvider: DeviceLocationProvider by lazy {
+        DeviceLocationProvider(applicationContext)
+    }
     private val viewModel: CameraScanViewModel by viewModels {
         val database = AppDatabase.getInstance(applicationContext)
         val allergenRepository = RoomAllergenRepository(database.allergenDao())
         val scanHistoryRepository = RoomScanHistoryRepository(database.scanHistoryDao())
-        CameraScanViewModel.Factory(allergenRepository, scanHistoryRepository)
+        CameraScanViewModel.Factory(
+            repository = allergenRepository,
+            scanHistoryRepository = scanHistoryRepository,
+            locationProvider = { deviceLocationProvider.getCurrentLocationOrNull() }
+        )
     }
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null
@@ -52,6 +60,14 @@ class CameraScanActivity : AppCompatActivity() {
             viewModel.onPermissionResult(isGranted)
             if (isGranted) {
                 bindCameraUseCases()
+            }
+        }
+
+    private val requestLocationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (!isGranted) {
+                binding.textCameraStatus.text = getString(R.string.location_permission_denied_optional)
+                binding.textCameraStatus.visibility = android.view.View.VISIBLE
             }
         }
 
@@ -76,6 +92,7 @@ class CameraScanActivity : AppCompatActivity() {
 
         setupInsets()
         observeUiState()
+        ensureLocationPermissionOptional()
         ensureCameraPermissionAndStart()
     }
 
@@ -175,6 +192,17 @@ class CameraScanActivity : AppCompatActivity() {
             bindCameraUseCases()
         } else {
             requestCameraPermission.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun ensureLocationPermissionOptional() {
+        val isGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!isGranted) {
+            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 

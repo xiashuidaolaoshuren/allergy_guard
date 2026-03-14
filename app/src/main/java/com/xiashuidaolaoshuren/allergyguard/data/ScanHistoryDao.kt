@@ -14,6 +14,15 @@ interface ScanHistoryDao {
     @Query("SELECT * FROM scan_results WHERE hasAllergens = 1 ORDER BY timestamp DESC")
     fun getAllergenDetectedScanHistory(): Flow<List<ScanResult>>
 
+    @Query("SELECT * FROM scan_results WHERE location IS NOT NULL AND location != '' ORDER BY timestamp DESC")
+    fun getScanHistoryWithLocation(): Flow<List<ScanResult>>
+
+    @Query("SELECT * FROM scan_results WHERE hasAllergens = 1 AND location IS NOT NULL AND location != '' ORDER BY timestamp DESC")
+    fun getAllergenDetectedScanHistoryWithLocation(): Flow<List<ScanResult>>
+
+    @Query("SELECT * FROM scan_results WHERE id = :id LIMIT 1")
+    suspend fun getScanResultById(id: String): ScanResult?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertScanResult(scanResult: ScanResult)
 

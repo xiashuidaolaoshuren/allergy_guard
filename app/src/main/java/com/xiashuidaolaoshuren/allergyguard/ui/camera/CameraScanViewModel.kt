@@ -4,29 +4,31 @@ import android.graphics.Rect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.mlkit.nl.translate.TranslateLanguage
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AllergenRepository
 import com.xiashuidaolaoshuren.allergyguard.data.ScanHistoryRepository
 import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
+import com.xiashuidaolaoshuren.allergyguard.logic.ScanCoordinate
+import com.xiashuidaolaoshuren.allergyguard.logic.ScanLocationCodec
 import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
-import com.google.mlkit.nl.languageid.LanguageIdentifier
-import com.google.mlkit.nl.translate.TranslateLanguage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import java.util.UUID
 
 class CameraScanViewModel(
     private val repository: AllergenRepository,
     private val scanHistoryRepository: ScanHistoryRepository,
+    private val locationProvider: suspend () -> ScanCoordinate? = { null },
     private val alertCooldownMs: Long = DEFAULT_ALERT_COOLDOWN_MS,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
@@ -167,13 +169,17 @@ class CameraScanViewModel(
         lastSavedHasAllergens = hasAllergens
 
         viewModelScope.launch {
+            val encodedLocation = withContext(Dispatchers.IO) {
+                locationProvider()?.let { ScanLocationCodec.encode(it) }
+            }
+
             scanHistoryRepository.insertScanResult(
                 ScanResult(
                     id = UUID.randomUUID().toString(),
                     timestamp = nowMs,
                     textContent = normalized,
                     hasAllergens = hasAllergens,
-                    location = null
+                    location = encodedLocation
                 )
             )
         }
@@ -223,12 +229,17 @@ class CameraScanViewModel(
 
     class Factory(
         private val repository: AllergenRepository,
-        private val scanHistoryRepository: ScanHistoryRepository
+        private val scanHistoryRepository: ScanHistoryRepository,
+        private val locationProvider: suspend () -> ScanCoordinate? = { null }
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(CameraScanViewModel::class.java)) {
-                return CameraScanViewModel(repository, scanHistoryRepository) as T
+                return CameraScanViewModel(
+                    repository = repository,
+                    scanHistoryRepository = scanHistoryRepository,
+                    locationProvider = locationProvider
+                ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
