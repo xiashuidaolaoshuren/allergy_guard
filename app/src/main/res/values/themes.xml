@@ -2,8 +2,21 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.AllergyGuard" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:statusBarColor">@color/primary</item>
+        
+        <!-- UI Improvements -->
+        <item name="materialButtonStyle">@style/Widget.Material3.Button.TonalButton</item>
+        <item name="cardViewStyle">@style/Widget.Material3.CardView.Elevated</item>
     </style>
 
     <style name="Theme.AllergyGuard" parent="Base.Theme.AllergyGuard" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/surface</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.AllergyGuard</item>
+    </style>
 </resources>

@@ -2,8 +2,12 @@ package com.xiashuidaolaoshuren.allergyguard
 
 import android.content.Intent
 import android.os.Bundle
+import android.transition.Fade
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityOptionsCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivityMainBinding
@@ -16,10 +20,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        window.exitTransition = Fade()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -27,12 +34,15 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        setupEntranceAnimations()
+
         binding.buttonManageAllergens.setOnClickListener {
             startActivity(Intent(this, AllergenListActivity::class.java))
         }
 
         binding.buttonStartScan.setOnClickListener {
-            startActivity(Intent(this, CameraScanActivity::class.java))
+            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, binding.imageLogo, "transition_scan")
+            startActivity(Intent(this, CameraScanActivity::class.java), options.toBundle())
         }
 
         binding.buttonViewHistory.setOnClickListener {
@@ -41,6 +51,27 @@ class MainActivity : AppCompatActivity() {
 
         binding.buttonSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
+        }
+    }
+
+    private fun setupEntranceAnimations() {
+        val viewsToAnimate = listOf(
+            binding.imageLogo,
+            binding.buttonStartScan,
+            binding.buttonManageAllergens,
+            binding.buttonViewHistory,
+            binding.buttonSettings
+        )
+
+        viewsToAnimate.forEachIndexed { index, view ->
+            view.alpha = 0f
+            view.translationY = 50f
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(400)
+                .setStartDelay(100L * index)
+                .start()
         }
     }
 }

@@ -6,12 +6,36 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.View
+import android.animation.ValueAnimator
+import android.view.animation.LinearInterpolator
 import com.xiashuidaolaoshuren.allergyguard.util.CoordinateTransformer
 
 class OverlayView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
+
+    private var pulseAlpha = 1.0f
+    private val pulseAnimator = ValueAnimator.ofFloat(0.4f, 1.0f).apply {
+        duration = 800
+        repeatMode = ValueAnimator.REVERSE
+        repeatCount = ValueAnimator.INFINITE
+        interpolator = LinearInterpolator()
+        addUpdateListener { animator ->
+            pulseAlpha = animator.animatedValue as Float
+            invalidate()
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        pulseAnimator.start()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        pulseAnimator.cancel()
+    }
 
     data class OverlayBlock(
         val text: String,
@@ -77,12 +101,21 @@ class OverlayView @JvmOverloads constructor(
             if (transformed.isEmpty) {
                 return@forEach
             }
+
+            val paint = if (block.isAllergen) {
+                allergenPaint.alpha = (pulseAlpha * 255).toInt()
+                allergenPaint
+            } else {
+                safePaint.alpha = 255
+                safePaint
+            }
+
             canvas.drawRect(
                 transformed.left,
                 transformed.top,
                 transformed.right,
                 transformed.bottom,
-                if (block.isAllergen) allergenPaint else safePaint
+                paint
             )
         }
     }

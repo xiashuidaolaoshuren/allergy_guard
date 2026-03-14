@@ -2,6 +2,17 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Brand Palette: Guardian Blue & Safety Orange -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_variant">#1565C0</color>
+    <color name="secondary">#FF9800</color>
+    <color name="secondary_variant">#F57C00</color>
+    <color name="surface">#F5F5F5</color>
+    <color name="on_surface">#212121</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_secondary">#000000</color>
+
     <color name="scan_alert_red">#C62828</color>
     <color name="scan_safe_green">#2E7D32</color>
 </resources>
