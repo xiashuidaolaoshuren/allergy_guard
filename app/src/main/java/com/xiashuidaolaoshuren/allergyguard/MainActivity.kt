@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.buttonStartScan.setOnClickListener {
-            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, binding.imageLogo, "transition_scan")
+            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, binding.logoContainer, "transition_scan")
             startActivity(Intent(this, CameraScanActivity::class.java), options.toBundle())
         }
 
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupEntranceAnimations() {
         val viewsToAnimate = listOf(
-            binding.imageLogo,
+            binding.logoContainer,
             binding.buttonStartScan,
             binding.buttonManageAllergens,
             binding.buttonViewHistory,
