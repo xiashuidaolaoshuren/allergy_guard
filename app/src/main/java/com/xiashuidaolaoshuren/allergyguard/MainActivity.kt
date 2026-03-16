@@ -36,20 +36,20 @@ class MainActivity : AppCompatActivity() {
 
         setupEntranceAnimations()
 
-        binding.buttonManageAllergens.setOnClickListener {
+        binding.cardManageAllergens.setOnClickListener {
             startActivity(Intent(this, AllergenListActivity::class.java))
         }
 
-        binding.buttonStartScan.setOnClickListener {
+        binding.cardStartScan.setOnClickListener {
             val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, binding.logoContainer, "transition_scan")
             startActivity(Intent(this, CameraScanActivity::class.java), options.toBundle())
         }
 
-        binding.buttonViewHistory.setOnClickListener {
+        binding.cardViewHistory.setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
         }
 
-        binding.buttonSettings.setOnClickListener {
+        binding.cardSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
@@ -57,10 +57,10 @@ class MainActivity : AppCompatActivity() {
     private fun setupEntranceAnimations() {
         val viewsToAnimate = listOf(
             binding.logoContainer,
-            binding.buttonStartScan,
-            binding.buttonManageAllergens,
-            binding.buttonViewHistory,
-            binding.buttonSettings
+            binding.cardStartScan,
+            binding.cardManageAllergens,
+            binding.cardViewHistory,
+            binding.cardSettings
         )
 
         viewsToAnimate.forEachIndexed { index, view ->
