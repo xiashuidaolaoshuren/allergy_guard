@@ -133,8 +133,8 @@
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintStart_toEndOf="@id/centerVertical"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/logoContainer"
-        app:layout_constraintBottom_toTopOf="@id/cardSettings"
+        app:layout_constraintTop_toTopOf="@id/cardStartScan"
+        app:layout_constraintBottom_toBottomOf="@id/cardStartScan"
         android:clickable="true"
         android:focusable="true">
 
@@ -225,8 +225,8 @@
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintStart_toEndOf="@id/centerVertical"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardManageAllergens"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="@id/cardViewHistory"
+        app:layout_constraintBottom_toBottomOf="@id/cardViewHistory"
         android:clickable="true"
         android:focusable="true">
 
