@@ -53,7 +53,6 @@ class CameraScanActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null
     private var allergenAlertDialog: AlertDialog? = null
-    private var selectedScript: OcrScript = OcrScript.LATIN
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -79,14 +78,10 @@ class CameraScanActivity : AppCompatActivity() {
         setContentView(binding.root)
         title = getString(R.string.camera_scan_title)
         binding.previewViewCamera.scaleType = PreviewView.ScaleType.FILL_CENTER
-        selectedScript = loadSelectedScript()
-        binding.buttonScriptSelector.setOnClickListener {
-            showScriptPicker()
+
+        binding.buttonBack.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
-        binding.buttonTranslationSettings.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
-        updateScriptButtonLabel()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -222,12 +217,12 @@ class CameraScanActivity : AppCompatActivity() {
                     .also {
                         frameAnalyzer?.close()
                         frameAnalyzer = CameraFrameAnalyzer(
-                            callbackExecutor = ContextCompat.getMainExecutor(this),
+                            callbackExecutor = ContextCompat.getMainExecutor(this@CameraScanActivity),
                             onTextRecognized = viewModel::onTextRecognized,
                             onOcrError = viewModel::onOcrError,
                             processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES,
                             isFrontCamera = false,
-                            script = selectedScript
+                            script = OcrScript.LATIN
                         )
                         it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }
@@ -252,56 +247,6 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     private companion object {
-        const val PREFS_NAME = "camera_scan_prefs"
-        const val PREF_KEY_OCR_SCRIPT = "pref_key_ocr_script"
         const val OCR_PROCESS_EVERY_N_FRAMES = 3
-    }
-
-    private fun showScriptPicker() {
-        val scripts = OcrScript.entries
-        val labels = scripts.map { scriptLabel(it) }.toTypedArray()
-        val selectedIndex = scripts.indexOf(selectedScript).coerceAtLeast(0)
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.camera_script_selector_title)
-            .setSingleChoiceItems(labels, selectedIndex) { dialog, which ->
-                val newScript = scripts[which]
-                if (newScript != selectedScript) {
-                    selectedScript = newScript
-                    saveSelectedScript(newScript)
-                    updateScriptButtonLabel()
-                    bindCameraUseCases()
-                }
-                dialog.dismiss()
-            }
-            .setNegativeButton(R.string.action_cancel, null)
-            .show()
-    }
-
-    private fun updateScriptButtonLabel() {
-        binding.buttonScriptSelector.text = scriptLabel(selectedScript)
-    }
-
-    private fun scriptLabel(script: OcrScript): String {
-        return when (script) {
-            OcrScript.LATIN -> getString(R.string.camera_script_latin)
-            OcrScript.CHINESE -> getString(R.string.camera_script_chinese)
-            OcrScript.JAPANESE -> getString(R.string.camera_script_japanese)
-            OcrScript.KOREAN -> getString(R.string.camera_script_korean)
-        }
-    }
-
-    private fun saveSelectedScript(script: OcrScript) {
-        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-            .edit()
-            .putString(PREF_KEY_OCR_SCRIPT, script.name)
-            .apply()
-    }
-
-    private fun loadSelectedScript(): OcrScript {
-        val value = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-            .getString(PREF_KEY_OCR_SCRIPT, OcrScript.LATIN.name)
-            ?: OcrScript.LATIN.name
-        return OcrScript.entries.firstOrNull { it.name == value } ?: OcrScript.LATIN
     }
 }
