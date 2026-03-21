@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Allergy Guard</string>
+    <string name="welcome_message">Welcome to AllergyGuard 👋</string>
     <string name="start_scan">Start Scan</string>
     <string name="manage_allergens">Manage Allergens</string>
     <string name="view_scan_history">View Scan History</string>
