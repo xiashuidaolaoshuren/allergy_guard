@@ -53,6 +53,7 @@ class CameraScanActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null
     private var allergenAlertDialog: AlertDialog? = null
+    private var selectedScript: OcrScript = OcrScript.LATIN
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -78,9 +79,14 @@ class CameraScanActivity : AppCompatActivity() {
         setContentView(binding.root)
         title = getString(R.string.camera_scan_title)
         binding.previewViewCamera.scaleType = PreviewView.ScaleType.FILL_CENTER
+        selectedScript = loadSelectedScript()
+        updateScriptSelectorLabel()
 
         binding.buttonBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
+        }
+        binding.buttonScriptSelector.setOnClickListener {
+            showScriptSelectorDialog()
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -222,7 +228,7 @@ class CameraScanActivity : AppCompatActivity() {
                             onOcrError = viewModel::onOcrError,
                             processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES,
                             isFrontCamera = false,
-                            script = OcrScript.LATIN
+                            script = selectedScript
                         )
                         it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }
@@ -246,7 +252,56 @@ class CameraScanActivity : AppCompatActivity() {
         )
     }
 
+    private fun showScriptSelectorDialog() {
+        val scripts = OcrScript.entries.toTypedArray()
+        val scriptLabels = scripts.map { getString(getScriptLabelRes(it)) }.toTypedArray()
+        val selectedIndex = scripts.indexOf(selectedScript).coerceAtLeast(0)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.camera_script_selector_title)
+            .setSingleChoiceItems(scriptLabels, selectedIndex) { dialog, which ->
+                val newScript = scripts[which]
+                if (newScript != selectedScript) {
+                    selectedScript = newScript
+                    persistSelectedScript(newScript)
+                    updateScriptSelectorLabel()
+                    bindCameraUseCases()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.action_cancel, null)
+            .show()
+    }
+
+    private fun updateScriptSelectorLabel() {
+        binding.buttonScriptSelector.text = getString(getScriptLabelRes(selectedScript))
+    }
+
+    private fun getScriptLabelRes(script: OcrScript): Int {
+        return when (script) {
+            OcrScript.LATIN -> R.string.camera_script_latin
+            OcrScript.CHINESE -> R.string.camera_script_chinese
+            OcrScript.JAPANESE -> R.string.camera_script_japanese
+            OcrScript.KOREAN -> R.string.camera_script_korean
+        }
+    }
+
+    private fun loadSelectedScript(): OcrScript {
+        val savedValue = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .getString(KEY_SELECTED_SCRIPT, OcrScript.LATIN.name)
+        return OcrScript.entries.firstOrNull { it.name == savedValue } ?: OcrScript.LATIN
+    }
+
+    private fun persistSelectedScript(script: OcrScript) {
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .edit()
+            .putString(KEY_SELECTED_SCRIPT, script.name)
+            .apply()
+    }
+
     private companion object {
         const val OCR_PROCESS_EVERY_N_FRAMES = 3
+        const val PREFS_NAME = "camera_scan_prefs"
+        const val KEY_SELECTED_SCRIPT = "selected_ocr_script"
     }
 }
