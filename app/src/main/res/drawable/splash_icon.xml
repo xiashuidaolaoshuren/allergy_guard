@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Wrapper drawable for the SplashScreen API.
-    Using a layer-list with gravity="center" prevents the PNG from being
-    stretched to fit the 288dp×288dp splash screen icon area, preserving
-    the logo's natural aspect ratio.
+    The SplashScreen API clips the icon with a circular mask (like adaptive icons).
+    We use android:inset="20%" to shrink the logo so the entire image fits inside
+    the inscribed circle, preventing any part of the logo from being cropped.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
+    <item android:inset="20%">
         <bitmap
             android:src="@drawable/logo"
             android:gravity="center" />
