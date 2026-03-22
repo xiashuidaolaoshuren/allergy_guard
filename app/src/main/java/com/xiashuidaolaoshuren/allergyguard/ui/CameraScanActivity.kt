@@ -54,6 +54,7 @@ class CameraScanActivity : AppCompatActivity() {
     private var frameAnalyzer: CameraFrameAnalyzer? = null
     private var allergenAlertDialog: AlertDialog? = null
     private var selectedScript: OcrScript = OcrScript.LATIN
+    private var isFrontCamera: Boolean = false
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -87,6 +88,10 @@ class CameraScanActivity : AppCompatActivity() {
         }
         binding.buttonScriptSelector.setOnClickListener {
             showScriptSelectorDialog()
+        }
+        binding.buttonFlipCamera.setOnClickListener {
+            isFrontCamera = !isFrontCamera
+            bindCameraUseCases()
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -227,13 +232,17 @@ class CameraScanActivity : AppCompatActivity() {
                             onTextRecognized = viewModel::onTextRecognized,
                             onOcrError = viewModel::onOcrError,
                             processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES,
-                            isFrontCamera = false,
+                            isFrontCamera = isFrontCamera,
                             script = selectedScript
                         )
                         it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }
 
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                val cameraSelector = if (isFrontCamera) {
+                    CameraSelector.DEFAULT_FRONT_CAMERA
+                } else {
+                    CameraSelector.DEFAULT_BACK_CAMERA
+                }
 
                 try {
                     cameraProvider.unbindAll()
