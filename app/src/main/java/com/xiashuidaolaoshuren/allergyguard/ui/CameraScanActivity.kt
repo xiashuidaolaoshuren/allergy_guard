@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.CameraInfoUnavailableException
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -218,6 +219,26 @@ class CameraScanActivity : AppCompatActivity() {
             {
                 val cameraProvider = cameraProviderFuture.get()
 
+                val hasFrontCamera = hasCamera(cameraProvider, CameraSelector.DEFAULT_FRONT_CAMERA)
+                val hasBackCamera = hasCamera(cameraProvider, CameraSelector.DEFAULT_BACK_CAMERA)
+
+                if (!hasFrontCamera && !hasBackCamera) {
+                    viewModel.onCameraInitError()
+                    return@addListener
+                }
+
+                val requestedFrontCamera = isFrontCamera
+                val effectiveFrontCamera = when {
+                    requestedFrontCamera && hasFrontCamera -> true
+                    !requestedFrontCamera && hasBackCamera -> false
+                    hasBackCamera -> false
+                    else -> true
+                }
+
+                if (effectiveFrontCamera != isFrontCamera) {
+                    isFrontCamera = effectiveFrontCamera
+                }
+
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(binding.previewViewCamera.getSurfaceProvider())
                 }
@@ -232,13 +253,13 @@ class CameraScanActivity : AppCompatActivity() {
                             onTextRecognized = viewModel::onTextRecognized,
                             onOcrError = viewModel::onOcrError,
                             processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES,
-                            isFrontCamera = isFrontCamera,
+                            isFrontCamera = effectiveFrontCamera,
                             script = selectedScript
                         )
                         it.setAnalyzer(cameraExecutor, frameAnalyzer!!)
                     }
 
-                val cameraSelector = if (isFrontCamera) {
+                val cameraSelector = if (effectiveFrontCamera) {
                     CameraSelector.DEFAULT_FRONT_CAMERA
                 } else {
                     CameraSelector.DEFAULT_BACK_CAMERA
@@ -259,6 +280,17 @@ class CameraScanActivity : AppCompatActivity() {
             },
             ContextCompat.getMainExecutor(this)
         )
+    }
+
+    private fun hasCamera(
+        cameraProvider: ProcessCameraProvider,
+        selector: CameraSelector
+    ): Boolean {
+        return try {
+            cameraProvider.hasCamera(selector)
+        } catch (_: CameraInfoUnavailableException) {
+            false
+        }
     }
 
     private fun showScriptSelectorDialog() {
