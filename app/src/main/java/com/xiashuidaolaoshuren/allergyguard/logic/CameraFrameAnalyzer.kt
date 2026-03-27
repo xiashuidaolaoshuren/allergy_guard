@@ -59,12 +59,14 @@ class CameraFrameAnalyzer(
                 val rotation = image.imageInfo.rotationDegrees
                 val sourceWidth = if (rotation % 180 == 0) image.width else image.height
                 val sourceHeight = if (rotation % 180 == 0) image.height else image.width
-                val blocks = visionText.textBlocks.mapNotNull { block ->
-                    val bounding = block.boundingBox ?: return@mapNotNull null
-                    OcrTextBlock(
-                        text = block.text,
-                        boundingBox = bounding
-                    )
+                val blocks = visionText.textBlocks.flatMap { block ->
+                    block.lines.mapNotNull { line ->
+                        val bounding = line.boundingBox ?: return@mapNotNull null
+                        OcrTextBlock(
+                            text = line.text,
+                            boundingBox = bounding
+                        )
+                    }
                 }
 
                 onTextRecognized(

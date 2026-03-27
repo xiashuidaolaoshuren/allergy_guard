@@ -14,6 +14,9 @@ import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanCoordinate
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanLocationCodec
 import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,41 +85,44 @@ class CameraScanViewModel(
             try {
                 // Determine if we need translation
                 val sourceLang = TranslationManager.identifyLanguage(frameData.fullText)
-                val needsTranslation = sourceLang != TranslateLanguage.ENGLISH && 
-                                       sourceLang != "und"
+                val needsTranslation = sourceLang != TranslateLanguage.ENGLISH &&
+                    sourceLang != "und"
 
-                var currentText = frameData.fullText
-
-                if (needsTranslation) {
+                val blockTextsForMatching = if (needsTranslation) {
                     _uiState.value = _uiState.value.copy(
                         statusMessageResId = R.string.translation_status_downloading
                     )
-                    val translated = TranslationManager.translateText(frameData.fullText, sourceLang)
-                    if (translated != null) {
-                        currentText = translated
-                    } else {
-                        // Model missing? Prompt to download or just continue with raw
-                        _uiState.value = _uiState.value.copy(
-                            statusMessageResId = R.string.translation_status_downloading
-                        )
-                        // Trigger async download (non-blocking for this frame)
-                        TranslationManager.downloadModel(sourceLang)
+                    coroutineScope {
+                        frameData.textBlocks.map { block ->
+                            async {
+                                TranslationManager.translateText(block.text, sourceLang) ?: block.text
+                            }
+                        }.awaitAll()
                     }
+                } else {
+                    frameData.textBlocks.map { it.text }
                 }
 
+                if (needsTranslation) {
+                    // Trigger async download to speed up next frames when model is missing.
+                    TranslationManager.downloadModel(sourceLang)
+                }
+
+                val currentText = blockTextsForMatching.joinToString(separator = " ")
                 val matchedAllergens = AllergenTextMatcher.findMatches(currentText, enabledAllergenNames)
-                
-                // For overlays, we still show the original text blocks but check visibility against English matches 
-                // if we translated. This is a simplification.
-                val overlayBlocks = frameData.textBlocks.map { block ->
+
+                val overlayBlocks = frameData.textBlocks.mapIndexed { index, block ->
+                    val blockMatches = AllergenTextMatcher.findMatches(
+                        blockTextsForMatching[index],
+                        enabledAllergenNames
+                    )
                     OverlayBlockUi(
                         text = block.text,
                         sourceBoundingBox = block.boundingBox,
-                        isAllergen = AllergenTextMatcher.findMatches(block.text, enabledAllergenNames).isNotEmpty() ||
-                                    (needsTranslation && matchedAllergens.isNotEmpty()) // Heuristic: if any allergen found in full translated text, mark blocks
+                        isAllergen = blockMatches.isNotEmpty()
                     )
                 }
-                
+
                 val overlayFrame = OverlayFrameUi(
                     blocks = overlayBlocks,
                     sourceWidth = frameData.sourceWidth,
@@ -128,7 +134,7 @@ class CameraScanViewModel(
                     maybePersistScanResult(currentText, hasAllergens = false)
                     _uiState.value = CameraUiState(
                         showStatus = true,
-                        statusMessageResId = if (needsTranslation) R.string.camera_no_allergens_found else R.string.camera_no_allergens_found,
+                        statusMessageResId = R.string.camera_no_allergens_found,
                         overlayFrame = overlayFrame
                     )
                 } else {
