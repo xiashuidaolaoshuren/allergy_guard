@@ -83,6 +83,9 @@ class AllergenListActivity : AppCompatActivity() {
             },
             onSynonymsClicked = { allergen ->
                 showSynonymsDialog(allergen)
+            },
+            onDeleteClicked = { allergen ->
+                showDeleteCustomAllergenDialog(allergen)
             }
         )
         binding.recyclerAllergens.apply {
@@ -156,6 +159,20 @@ class AllergenListActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showDeleteCustomAllergenDialog(allergen: Allergen) {
+        if (!allergen.isCustom) {
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.delete_allergen_confirm_title)
+            .setMessage(getString(R.string.delete_allergen_confirm_message, allergen.name))
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_delete) { _, _ ->
+                viewModel.deleteCustomAllergen(allergen.id)
+            }
+            .show()
     }
 
     //  Synonyms / Alias dialog 

@@ -9,6 +9,7 @@ interface AllergenRepository {
     suspend fun setAllergenEnabled(id: String, isEnabled: Boolean)
     suspend fun customAllergenNameExists(name: String): Boolean
     suspend fun addCustomAllergen(name: String): Boolean
+    suspend fun deleteCustomAllergen(id: String)
 }
 
 class RoomAllergenRepository(
@@ -32,5 +33,9 @@ class RoomAllergenRepository(
             isCustom = true
         )
         return allergenDao.insertAllergenIgnore(allergen) != -1L
+    }
+
+    override suspend fun deleteCustomAllergen(id: String) {
+        allergenDao.deleteAllergenById(id)
     }
 }

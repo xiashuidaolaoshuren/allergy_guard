@@ -65,6 +65,12 @@ class AllergenListViewModel(
         }
     }
 
+    fun deleteCustomAllergen(id: String) {
+        viewModelScope.launch {
+            repository.deleteCustomAllergen(id)
+        }
+    }
+
     // ── Alias management ────────────────────────────────────────────────────
 
     fun getAliasesForAllergen(allergenId: String): Flow<List<AllergenAlias>> =

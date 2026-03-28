@@ -39,6 +39,7 @@
     <string name="action_add">Add</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
     <string name="translation_settings_title">Translation Models</string>
     <string name="translation_settings_hint">Pre-download language models for faster offline scanning.</string>
     <string name="translation_status_not_downloaded">Not downloaded</string>
@@ -59,4 +60,7 @@
     <string name="action_delete_alias">Delete alias</string>
     <string name="error_alias_blank">Please enter an alias name.</string>
     <string name="error_alias_duplicate">This alias already exists.</string>
+    <string name="allergen_delete_button_desc">Delete custom allergen</string>
+    <string name="delete_allergen_confirm_title">Remove allergen</string>
+    <string name="delete_allergen_confirm_message">Remove \"%1$s\" and all its aliases? This cannot be undone.</string>
 </resources>
