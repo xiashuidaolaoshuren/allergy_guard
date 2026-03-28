@@ -50,4 +50,13 @@
     <string name="translation_download_failed">Failed to download %1$s model. %2$s</string>
     <string name="error_custom_allergen_blank">Please enter an allergen name.</string>
     <string name="error_custom_allergen_duplicate">This allergen already exists.</string>
+    <string name="allergen_synonyms_button_desc">View synonyms and aliases</string>
+    <string name="allergen_synonyms_title">Synonyms &amp; Aliases</string>
+    <string name="allergen_synonyms_builtin_section">Automatically detected derivatives</string>
+    <string name="allergen_aliases_section">Your custom aliases</string>
+    <string name="alias_name_hint">Alias or ingredient name</string>
+    <string name="action_add_alias">Add alias</string>
+    <string name="action_delete_alias">Delete alias</string>
+    <string name="error_alias_blank">Please enter an alias name.</string>
+    <string name="error_alias_duplicate">This alias already exists.</string>
 </resources>

@@ -1,8 +1,20 @@
 package com.xiashuidaolaoshuren.allergyguard.logic
 
 object AllergenTextMatcher {
-    fun findMatches(recognizedText: String, enabledAllergenNames: List<String>): List<String> {
-        if (recognizedText.isBlank() || enabledAllergenNames.isEmpty()) {
+    /**
+     * Finds which allergens are present in [recognizedText].
+     *
+     * @param recognizedText  The (translated) OCR text to search.
+     * @param allergenSynonyms  Map of allergen display name → list of synonyms/derivatives
+     *   (built-in synonyms + user aliases). An empty synonym list is fine — the allergen
+     *   name itself is always checked as well.
+     * @return List of allergen display names that were matched.
+     */
+    fun findMatches(
+        recognizedText: String,
+        allergenSynonyms: Map<String, List<String>>
+    ): List<String> {
+        if (recognizedText.isBlank() || allergenSynonyms.isEmpty()) {
             return emptyList()
         }
 
@@ -16,14 +28,17 @@ object AllergenTextMatcher {
             .map(::normalize)
             .filter { it.isNotBlank() }
 
-        return enabledAllergenNames.filter { allergen ->
-            val normalizedAllergen = normalize(allergen)
-            if (normalizedAllergen.isBlank()) {
-                return@filter false
+        return allergenSynonyms.keys.filter { allergenName ->
+            val allTerms = buildList {
+                add(allergenName)
+                addAll(allergenSynonyms[allergenName] ?: emptyList())
             }
-
-            normalizedText.contains(normalizedAllergen) || tokens.any { token ->
-                levenshteinDistance(token, normalizedAllergen) <= maxDistance(normalizedAllergen.length)
+            allTerms.any { term ->
+                val normalizedTerm = normalize(term)
+                if (normalizedTerm.isBlank()) return@any false
+                normalizedText.contains(normalizedTerm) || tokens.any { token ->
+                    levenshteinDistance(token, normalizedTerm) <= maxDistance(normalizedTerm.length)
+                }
             }
         }
     }

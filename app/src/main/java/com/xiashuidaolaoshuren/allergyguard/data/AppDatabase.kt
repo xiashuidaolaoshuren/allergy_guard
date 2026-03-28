@@ -8,13 +8,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import java.util.Locale
 
 @Database(
-    entities = [Allergen::class, ScanResult::class],
-    version = 1,
+    entities = [Allergen::class, ScanResult::class, AllergenAlias::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun allergenDao(): AllergenDao
     abstract fun scanHistoryDao(): ScanHistoryDao
+    abstract fun allergenAliasDao(): AllergenAliasDao
 
     companion object {
         private const val DATABASE_NAME = "allergy_guard.db"
@@ -30,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun buildDatabase(context: Context): AppDatabase {
             return Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
+                .fallbackToDestructiveMigration()
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)

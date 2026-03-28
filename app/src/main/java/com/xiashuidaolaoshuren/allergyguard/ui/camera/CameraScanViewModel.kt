@@ -9,6 +9,8 @@ import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AllergenRepository
 import com.xiashuidaolaoshuren.allergyguard.data.ScanHistoryRepository
 import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
+import com.xiashuidaolaoshuren.allergyguard.data.AllergenAliasRepository
+import com.xiashuidaolaoshuren.allergyguard.logic.AllergenSynonymMap
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanCoordinate
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -31,6 +34,7 @@ import java.util.UUID
 class CameraScanViewModel(
     private val repository: AllergenRepository,
     private val scanHistoryRepository: ScanHistoryRepository,
+    private val aliasRepository: AllergenAliasRepository,
     private val locationProvider: suspend () -> ScanCoordinate? = { null },
     private val alertCooldownMs: Long = DEFAULT_ALERT_COOLDOWN_MS,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
@@ -39,7 +43,8 @@ class CameraScanViewModel(
     val uiState: StateFlow<CameraUiState> = _uiState.asStateFlow()
     private val _allergenAlertEvents = MutableSharedFlow<AllergenAlertEvent>(extraBufferCapacity = 1)
     val allergenAlertEvents: SharedFlow<AllergenAlertEvent> = _allergenAlertEvents.asSharedFlow()
-    private var enabledAllergenNames: List<String> = emptyList()
+    // Map of allergen display name -> all synonyms (built-in + user aliases) for enabled allergens
+    private var allergenSynonymMap: Map<String, List<String>> = emptyMap()
     private var lastAlertTimestampMs: Long = Long.MIN_VALUE
     private var lastSavedTimestampMs: Long = Long.MIN_VALUE
     private var lastSavedNormalizedText: String = ""
@@ -49,10 +54,20 @@ class CameraScanViewModel(
 
     init {
         viewModelScope.launch {
-            repository.allergens.collect { allergens ->
-                enabledAllergenNames = allergens
+            combine(
+                repository.allergens,
+                aliasRepository.getAllAliases()
+            ) { allergens, allAliases ->
+                val aliasesByAllergenId = allAliases.groupBy({ it.allergenId }, { it.alias })
+                allergens
                     .filter { it.isEnabled }
-                    .map { it.name }
+                    .associate { allergen ->
+                        val builtInSynonyms = AllergenSynonymMap.getSynonyms(allergen.name)
+                        val userAliases = aliasesByAllergenId[allergen.id] ?: emptyList()
+                        allergen.name to (builtInSynonyms + userAliases)
+                    }
+            }.collect { map ->
+                allergenSynonymMap = map
             }
         }
     }
@@ -109,12 +124,12 @@ class CameraScanViewModel(
                 }
 
                 val currentText = blockTextsForMatching.joinToString(separator = " ")
-                val matchedAllergens = AllergenTextMatcher.findMatches(currentText, enabledAllergenNames)
+                val matchedAllergens = AllergenTextMatcher.findMatches(currentText, allergenSynonymMap)
 
                 val overlayBlocks = frameData.textBlocks.mapIndexed { index, block ->
                     val blockMatches = AllergenTextMatcher.findMatches(
                         blockTextsForMatching[index],
-                        enabledAllergenNames
+                        allergenSynonymMap
                     )
                     OverlayBlockUi(
                         text = block.text,
@@ -236,6 +251,7 @@ class CameraScanViewModel(
     class Factory(
         private val repository: AllergenRepository,
         private val scanHistoryRepository: ScanHistoryRepository,
+        private val aliasRepository: AllergenAliasRepository,
         private val locationProvider: suspend () -> ScanCoordinate? = { null }
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -244,6 +260,7 @@ class CameraScanViewModel(
                 return CameraScanViewModel(
                     repository = repository,
                     scanHistoryRepository = scanHistoryRepository,
+                    aliasRepository = aliasRepository,
                     locationProvider = locationProvider
                 ) as T
             }

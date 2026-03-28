@@ -9,7 +9,8 @@ import com.xiashuidaolaoshuren.allergyguard.data.Allergen
 import com.xiashuidaolaoshuren.allergyguard.databinding.ItemAllergenToggleBinding
 
 class AllergenToggleAdapter(
-    private val onToggleChanged: (allergen: Allergen, isEnabled: Boolean) -> Unit
+    private val onToggleChanged: (allergen: Allergen, isEnabled: Boolean) -> Unit,
+    private val onSynonymsClicked: (allergen: Allergen) -> Unit
 ) : ListAdapter<Allergen, AllergenToggleAdapter.AllergenViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AllergenViewHolder {
@@ -18,7 +19,7 @@ class AllergenToggleAdapter(
             parent,
             false
         )
-        return AllergenViewHolder(binding, onToggleChanged)
+        return AllergenViewHolder(binding, onToggleChanged, onSynonymsClicked)
     }
 
     override fun onBindViewHolder(holder: AllergenViewHolder, position: Int) {
@@ -27,7 +28,8 @@ class AllergenToggleAdapter(
 
     class AllergenViewHolder(
         private val binding: ItemAllergenToggleBinding,
-        private val onToggleChanged: (allergen: Allergen, isEnabled: Boolean) -> Unit
+        private val onToggleChanged: (allergen: Allergen, isEnabled: Boolean) -> Unit,
+        private val onSynonymsClicked: (allergen: Allergen) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(allergen: Allergen) {
@@ -38,6 +40,12 @@ class AllergenToggleAdapter(
             binding.switchAllergenEnabled.setOnCheckedChangeListener { _, isChecked ->
                 if (bindingAdapterPosition != RecyclerView.NO_POSITION && isChecked != allergen.isEnabled) {
                     onToggleChanged(allergen, isChecked)
+                }
+            }
+
+            binding.buttonViewSynonyms.setOnClickListener {
+                if (bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                    onSynonymsClicked(allergen)
                 }
             }
         }

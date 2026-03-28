@@ -13,11 +13,23 @@
         android:id="@+id/textAllergenName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="8dp"
         android:textAppearance="?attr/textAppearanceBodyLarge"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/switchAllergenEnabled"
+        app:layout_constraintEnd_toStartOf="@id/buttonViewSynonyms"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/buttonViewSynonyms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/allergen_synonyms_button_desc"
+        android:src="@drawable/ic_label"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/switchAllergenEnabled"
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.materialswitch.MaterialSwitch

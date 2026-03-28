@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="8dp">
+
+        <!-- Built-in synonyms section (shown for built-in allergens) -->
+        <LinearLayout
+            android:id="@+id/sectionBuiltinSynonyms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/allergen_synonyms_builtin_section"
+                android:textAppearance="?attr/textAppearanceLabelMedium" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupSynonyms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+
+        <!-- User aliases section (shown for custom allergens) -->
+        <LinearLayout
+            android:id="@+id/sectionUserAliases"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/allergen_aliases_section"
+                android:textAppearance="?attr/textAppearanceLabelMedium" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerAliases"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputAlias"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/alias_name_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextAliasName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:inputType="textCapWords" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddAlias"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/action_add_alias" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
