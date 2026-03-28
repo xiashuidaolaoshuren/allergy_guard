@@ -82,4 +82,20 @@
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/white" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonScan"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="32dp"
+        android:contentDescription="@string/camera_scan_button"
+        app:backgroundTint="@color/white"
+        app:cornerRadius="36dp"
+        app:icon="@drawable/ic_home_scan"
+        app:iconTint="@color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:rippleColor="@color/black" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

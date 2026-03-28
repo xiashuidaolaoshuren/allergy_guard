@@ -15,12 +15,16 @@
     <string name="camera_scan_title">Scan Label</string>
     <string name="camera_back">Back</string>
     <string name="camera_flip">Flip camera</string>
+    <string name="camera_scan_button">Save scan</string>
     <string name="camera_permission_denied">Camera permission is required to scan labels.</string>
     <string name="camera_initialization_error">Unable to initialize camera. Please try again.</string>
     <string name="camera_scanning">Scanning label text…</string>
     <string name="camera_no_allergens_found">No enabled allergens detected.</string>
     <string name="camera_detected_allergens">Detected allergens: %1$s</string>
     <string name="camera_ocr_error">Unable to read text from camera frame.</string>
+    <string name="camera_scan_saved">Scan saved to history.</string>
+    <string name="camera_scan_nothing">Point the camera at text first.</string>
+    <string name="camera_scan_duplicate">Scan was already saved recently.</string>
     <string name="camera_allergen_alert_title">Allergen Alert</string>
     <string name="camera_allergen_alert_message">Potential allergen detected: %1$s</string>
     <string name="camera_script_selector_title">OCR Script</string>

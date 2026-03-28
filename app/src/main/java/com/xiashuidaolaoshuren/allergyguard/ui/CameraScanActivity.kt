@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AppDatabase
 import com.xiashuidaolaoshuren.allergyguard.data.RoomAllergenRepository
@@ -97,6 +98,9 @@ class CameraScanActivity : AppCompatActivity() {
             isFrontCamera = !isFrontCamera
             bindCameraUseCases()
         }
+        binding.buttonScan.setOnClickListener {
+            viewModel.onScanButtonPressed()
+        }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -167,6 +171,13 @@ class CameraScanActivity : AppCompatActivity() {
                 launch {
                     viewModel.allergenAlertEvents.collect { event ->
                         showAllergenAlertDialog(event.detectedAllergens)
+                    }
+                }
+
+                launch {
+                    viewModel.scanSavedEvents.collect { event ->
+                        Snackbar.make(binding.cameraScanRoot, event.messageResId, Snackbar.LENGTH_SHORT)
+                            .show()
                     }
                 }
             }

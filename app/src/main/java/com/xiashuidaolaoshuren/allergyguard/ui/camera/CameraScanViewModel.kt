@@ -43,12 +43,14 @@ class CameraScanViewModel(
     val uiState: StateFlow<CameraUiState> = _uiState.asStateFlow()
     private val _allergenAlertEvents = MutableSharedFlow<AllergenAlertEvent>(extraBufferCapacity = 1)
     val allergenAlertEvents: SharedFlow<AllergenAlertEvent> = _allergenAlertEvents.asSharedFlow()
+    private val _scanSavedEvents = MutableSharedFlow<ScanSavedEvent>(extraBufferCapacity = 1)
+    val scanSavedEvents: SharedFlow<ScanSavedEvent> = _scanSavedEvents.asSharedFlow()
     // Map of allergen display name -> all synonyms (built-in + user aliases) for enabled allergens
     private var allergenSynonymMap: Map<String, List<String>> = emptyMap()
     private var lastAlertTimestampMs: Long = Long.MIN_VALUE
     private var lastSavedTimestampMs: Long = Long.MIN_VALUE
-    private var lastSavedNormalizedText: String = ""
-    private var lastSavedHasAllergens: Boolean = false
+    private val sessionTextChunks = LinkedHashSet<String>()
+    private var sessionHasAllergens: Boolean = false
 
     private var isProcessing = false
 
@@ -145,8 +147,9 @@ class CameraScanViewModel(
                     isFrontCamera = frameData.isFrontCamera
                 )
 
+                addFrameToSessionBuffer(currentText, matchedAllergens.isNotEmpty())
+
                 if (matchedAllergens.isEmpty()) {
-                    maybePersistScanResult(currentText, hasAllergens = false)
                     _uiState.value = CameraUiState(
                         showStatus = true,
                         statusMessageResId = R.string.camera_no_allergens_found,
@@ -154,7 +157,6 @@ class CameraScanViewModel(
                     )
                 } else {
                     maybeEmitAllergenAlert(matchedAllergens)
-                    maybePersistScanResult(currentText, hasAllergens = true)
 
                     _uiState.value = CameraUiState(
                         showStatus = true,
@@ -169,25 +171,32 @@ class CameraScanViewModel(
         }
     }
 
-    private fun maybePersistScanResult(rawText: String, hasAllergens: Boolean) {
-        val normalized = rawText.trim().replace(Regex("\\s+"), " ")
+    private fun addFrameToSessionBuffer(rawText: String, hasAllergens: Boolean) {
+        val normalized = normalizeOcrText(rawText)
         if (normalized.isBlank()) {
+            return
+        }
+
+        sessionTextChunks.add(normalized)
+        sessionHasAllergens = sessionHasAllergens || hasAllergens
+    }
+
+    fun onScanButtonPressed() {
+        val mergedSessionText = normalizeOcrText(sessionTextChunks.joinToString(separator = " "))
+        if (mergedSessionText.isBlank()) {
+            _scanSavedEvents.tryEmit(ScanSavedEvent(R.string.camera_scan_nothing))
             return
         }
 
         val nowMs = nowProvider()
         val saveAllowedByCooldown = lastSavedTimestampMs == Long.MIN_VALUE ||
-            nowMs - lastSavedTimestampMs >= SAVE_SCAN_COOLDOWN_MS
-        val changedSinceLastSave =
-            normalized != lastSavedNormalizedText || hasAllergens != lastSavedHasAllergens
-
-        if (!saveAllowedByCooldown && !changedSinceLastSave) {
+            nowMs - lastSavedTimestampMs >= MANUAL_SCAN_COOLDOWN_MS
+        if (!saveAllowedByCooldown) {
+            _scanSavedEvents.tryEmit(ScanSavedEvent(R.string.camera_scan_duplicate))
             return
         }
 
         lastSavedTimestampMs = nowMs
-        lastSavedNormalizedText = normalized
-        lastSavedHasAllergens = hasAllergens
 
         viewModelScope.launch {
             val encodedLocation = withContext(Dispatchers.IO) {
@@ -198,12 +207,20 @@ class CameraScanViewModel(
                 ScanResult(
                     id = UUID.randomUUID().toString(),
                     timestamp = nowMs,
-                    textContent = normalized,
-                    hasAllergens = hasAllergens,
+                    textContent = mergedSessionText,
+                    hasAllergens = sessionHasAllergens,
                     location = encodedLocation
                 )
             )
+
+            sessionTextChunks.clear()
+            sessionHasAllergens = false
+            _scanSavedEvents.tryEmit(ScanSavedEvent(R.string.camera_scan_saved))
         }
+    }
+
+    private fun normalizeOcrText(rawText: String): String {
+        return rawText.trim().replace(Regex("\\s+"), " ")
     }
 
     fun onOcrError() {
@@ -248,6 +265,10 @@ class CameraScanViewModel(
         val detectedAllergens: List<String>
     )
 
+    data class ScanSavedEvent(
+        val messageResId: Int
+    )
+
     class Factory(
         private val repository: AllergenRepository,
         private val scanHistoryRepository: ScanHistoryRepository,
@@ -270,7 +291,7 @@ class CameraScanViewModel(
 
     companion object {
         private const val DEFAULT_ALERT_COOLDOWN_MS = 4_000L
-        private const val SAVE_SCAN_COOLDOWN_MS = 5_000L
+        private const val MANUAL_SCAN_COOLDOWN_MS = 2_000L
 
         internal fun shouldEmitAlert(nowMs: Long, lastAlertMs: Long, cooldownMs: Long): Boolean {
             val validCooldownMs = cooldownMs.coerceAtLeast(0L)
