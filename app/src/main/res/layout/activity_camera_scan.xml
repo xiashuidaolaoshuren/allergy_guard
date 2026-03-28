@@ -82,6 +82,27 @@
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/white" />
 
+    <HorizontalScrollView
+        android:id="@+id/scrollAllergenChips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/buttonScan"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupAllergens"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true" />
+
+    </HorizontalScrollView>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonScan"
         style="@style/Widget.Material3.Button"

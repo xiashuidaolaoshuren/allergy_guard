@@ -3,11 +3,12 @@ package com.xiashuidaolaoshuren.allergyguard.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -22,6 +23,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AppDatabase
@@ -57,7 +59,6 @@ class CameraScanActivity : AppCompatActivity() {
     }
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null
-    private var allergenAlertDialog: AlertDialog? = null
     private var selectedScript: OcrScript = OcrScript.LATIN
     private var isFrontCamera: Boolean = false
 
@@ -111,8 +112,6 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        allergenAlertDialog?.dismiss()
-        allergenAlertDialog = null
         frameAnalyzer?.close()
         frameAnalyzer = null
         cameraExecutor.shutdown()
@@ -150,56 +149,57 @@ class CameraScanActivity : AppCompatActivity() {
                         )
 
                         if (state.showStatus && state.statusMessageResId != null) {
-                            binding.textCameraStatus.text = if (
-                                state.statusMessageResId == R.string.camera_detected_allergens &&
-                                state.detectedAllergens.isNotEmpty()
-                            ) {
-                                getString(
-                                    state.statusMessageResId,
-                                    state.detectedAllergens.joinToString(separator = ", ")
-                                )
-                            } else {
-                                getString(state.statusMessageResId)
-                            }
+                            binding.textCameraStatus.text = getString(state.statusMessageResId)
                             binding.textCameraStatus.visibility = android.view.View.VISIBLE
                         } else {
                             binding.textCameraStatus.visibility = android.view.View.GONE
+                        }
+
+                        if (state.detectedAllergens.isEmpty()) {
+                            binding.scrollAllergenChips.visibility = android.view.View.GONE
+                            binding.chipGroupAllergens.removeAllViews()
+                        } else {
+                            binding.scrollAllergenChips.visibility = android.view.View.VISIBLE
+                            binding.chipGroupAllergens.removeAllViews()
+                            state.detectedAllergens.forEach { allergen ->
+                                val chip = Chip(this@CameraScanActivity)
+                                chip.text = allergen
+                                chip.isCheckable = false
+                                chip.isCloseIconVisible = false
+                                chip.chipBackgroundColor = ColorStateList.valueOf(0xFFE53935.toInt())
+                                chip.setTextColor(Color.WHITE)
+                                binding.chipGroupAllergens.addView(chip)
+                            }
                         }
                     }
                 }
 
                 launch {
-                    viewModel.allergenAlertEvents.collect { event ->
-                        showAllergenAlertDialog(event.detectedAllergens)
-                    }
-                }
-
-                launch {
                     viewModel.scanSavedEvents.collect { event ->
-                        Snackbar.make(binding.cameraScanRoot, event.messageResId, Snackbar.LENGTH_SHORT)
-                            .show()
+                        if (event.messageResId == R.string.camera_scan_saved) {
+                            showScanSavedDialog(event.detectedAllergens)
+                        } else {
+                            Snackbar.make(binding.cameraScanRoot, event.messageResId, Snackbar.LENGTH_SHORT)
+                                .show()
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun showAllergenAlertDialog(detectedAllergens: List<String>) {
-        if (detectedAllergens.isEmpty()) {
-            return
+    private fun showScanSavedDialog(detectedAllergens: List<String>) {
+        val message = if (detectedAllergens.isEmpty()) {
+            getString(R.string.camera_scan_saved_safe)
+        } else {
+            getString(R.string.camera_scan_saved_allergens, detectedAllergens.joinToString(", "))
         }
-
-        val allergenList = detectedAllergens.joinToString(separator = ", ")
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.camera_allergen_alert_title)
-            .setMessage(getString(R.string.camera_allergen_alert_message, allergenList))
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.camera_scan_saved_title)
+            .setMessage(message)
             .setCancelable(true)
             .setPositiveButton(R.string.action_ok, null)
-            .create()
-
-        allergenAlertDialog?.dismiss()
-        allergenAlertDialog = dialog
-        dialog.show()
+            .show()
     }
 
     private fun ensureCameraPermissionAndStart() {

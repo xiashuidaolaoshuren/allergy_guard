@@ -36,20 +36,17 @@ class CameraScanViewModel(
     private val scanHistoryRepository: ScanHistoryRepository,
     private val aliasRepository: AllergenAliasRepository,
     private val locationProvider: suspend () -> ScanCoordinate? = { null },
-    private val alertCooldownMs: Long = DEFAULT_ALERT_COOLDOWN_MS,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CameraUiState())
     val uiState: StateFlow<CameraUiState> = _uiState.asStateFlow()
-    private val _allergenAlertEvents = MutableSharedFlow<AllergenAlertEvent>(extraBufferCapacity = 1)
-    val allergenAlertEvents: SharedFlow<AllergenAlertEvent> = _allergenAlertEvents.asSharedFlow()
     private val _scanSavedEvents = MutableSharedFlow<ScanSavedEvent>(extraBufferCapacity = 1)
     val scanSavedEvents: SharedFlow<ScanSavedEvent> = _scanSavedEvents.asSharedFlow()
     // Map of allergen display name -> all synonyms (built-in + user aliases) for enabled allergens
     private var allergenSynonymMap: Map<String, List<String>> = emptyMap()
-    private var lastAlertTimestampMs: Long = Long.MIN_VALUE
     private var lastSavedTimestampMs: Long = Long.MIN_VALUE
     private val sessionTextChunks = LinkedHashSet<String>()
+    private val sessionDetectedAllergens = LinkedHashSet<String>()
     private var sessionHasAllergens: Boolean = false
 
     private var isProcessing = false
@@ -147,7 +144,7 @@ class CameraScanViewModel(
                     isFrontCamera = frameData.isFrontCamera
                 )
 
-                addFrameToSessionBuffer(currentText, matchedAllergens.isNotEmpty())
+                addFrameToSessionBuffer(currentText, matchedAllergens.distinct())
 
                 if (matchedAllergens.isEmpty()) {
                     _uiState.value = CameraUiState(
@@ -156,12 +153,9 @@ class CameraScanViewModel(
                         overlayFrame = overlayFrame
                     )
                 } else {
-                    maybeEmitAllergenAlert(matchedAllergens)
-
                     _uiState.value = CameraUiState(
-                        showStatus = true,
-                        statusMessageResId = R.string.camera_detected_allergens,
-                        detectedAllergens = matchedAllergens,
+                        showStatus = false,
+                        detectedAllergens = matchedAllergens.distinct(),
                         overlayFrame = overlayFrame
                     )
                 }
@@ -171,14 +165,15 @@ class CameraScanViewModel(
         }
     }
 
-    private fun addFrameToSessionBuffer(rawText: String, hasAllergens: Boolean) {
+    private fun addFrameToSessionBuffer(rawText: String, matchedAllergens: List<String>) {
         val normalized = normalizeOcrText(rawText)
         if (normalized.isBlank()) {
             return
         }
 
         sessionTextChunks.add(normalized)
-        sessionHasAllergens = sessionHasAllergens || hasAllergens
+        sessionDetectedAllergens.addAll(matchedAllergens)
+        sessionHasAllergens = sessionHasAllergens || matchedAllergens.isNotEmpty()
     }
 
     fun onScanButtonPressed() {
@@ -197,6 +192,7 @@ class CameraScanViewModel(
         }
 
         lastSavedTimestampMs = nowMs
+        val savedAllergens = sessionDetectedAllergens.toList()
 
         viewModelScope.launch {
             val encodedLocation = withContext(Dispatchers.IO) {
@@ -215,7 +211,8 @@ class CameraScanViewModel(
 
             sessionTextChunks.clear()
             sessionHasAllergens = false
-            _scanSavedEvents.tryEmit(ScanSavedEvent(R.string.camera_scan_saved))
+            sessionDetectedAllergens.clear()
+            _scanSavedEvents.tryEmit(ScanSavedEvent(R.string.camera_scan_saved, savedAllergens))
         }
     }
 
@@ -225,20 +222,6 @@ class CameraScanViewModel(
 
     fun onOcrError() {
         _uiState.value = CameraUiState(showStatus = true, statusMessageResId = R.string.camera_ocr_error)
-    }
-
-    private fun maybeEmitAllergenAlert(matchedAllergens: List<String>) {
-        val nowMs = nowProvider()
-        if (!shouldEmitAlert(nowMs, lastAlertTimestampMs, alertCooldownMs)) {
-            return
-        }
-
-        lastAlertTimestampMs = nowMs
-        _allergenAlertEvents.tryEmit(
-            AllergenAlertEvent(
-                detectedAllergens = matchedAllergens.distinct()
-            )
-        )
     }
 
     data class CameraUiState(
@@ -261,12 +244,9 @@ class CameraScanViewModel(
         val isFrontCamera: Boolean
     )
 
-    data class AllergenAlertEvent(
-        val detectedAllergens: List<String>
-    )
-
     data class ScanSavedEvent(
-        val messageResId: Int
+        val messageResId: Int,
+        val detectedAllergens: List<String> = emptyList()
     )
 
     class Factory(
@@ -290,7 +270,6 @@ class CameraScanViewModel(
     }
 
     companion object {
-        private const val DEFAULT_ALERT_COOLDOWN_MS = 4_000L
         private const val MANUAL_SCAN_COOLDOWN_MS = 2_000L
 
         internal fun shouldEmitAlert(nowMs: Long, lastAlertMs: Long, cooldownMs: Long): Boolean {
