@@ -59,5 +59,5 @@
 ## Phase 9: Refinement & Testing
 - [ ] Performance profiling (memory usage during OCR)
 - [X] UI Polish (Logo, theme, animations)
-- [ ] Test with physical food labels under varied lighting
+- [X] Test with physical food labels under varied lighting
 - [ ] Final bug fixing and cleanup
