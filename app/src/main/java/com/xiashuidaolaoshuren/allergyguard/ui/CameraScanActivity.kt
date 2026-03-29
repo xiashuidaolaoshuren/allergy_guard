@@ -1,7 +1,6 @@
 package com.xiashuidaolaoshuren.allergyguard.ui
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -61,6 +60,7 @@ class CameraScanActivity : AppCompatActivity() {
     private var frameAnalyzer: CameraFrameAnalyzer? = null
     private var selectedScript: OcrScript = OcrScript.LATIN
     private var isFrontCamera: Boolean = false
+    private var lastRenderedAllergens: List<String> = emptyList()
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -155,22 +155,7 @@ class CameraScanActivity : AppCompatActivity() {
                             binding.textCameraStatus.visibility = android.view.View.GONE
                         }
 
-                        if (state.detectedAllergens.isEmpty()) {
-                            binding.scrollAllergenChips.visibility = android.view.View.GONE
-                            binding.chipGroupAllergens.removeAllViews()
-                        } else {
-                            binding.scrollAllergenChips.visibility = android.view.View.VISIBLE
-                            binding.chipGroupAllergens.removeAllViews()
-                            state.detectedAllergens.forEach { allergen ->
-                                val chip = Chip(this@CameraScanActivity)
-                                chip.text = allergen
-                                chip.isCheckable = false
-                                chip.isCloseIconVisible = false
-                                chip.chipBackgroundColor = ColorStateList.valueOf(0xFFE53935.toInt())
-                                chip.setTextColor(Color.WHITE)
-                                binding.chipGroupAllergens.addView(chip)
-                            }
-                        }
+                        renderAllergenChips(state.detectedAllergens)
                     }
                 }
 
@@ -189,6 +174,10 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     private fun showScanSavedDialog(detectedAllergens: List<String>) {
+        if (isFinishing || isDestroyed) {
+            return
+        }
+
         val message = if (detectedAllergens.isEmpty()) {
             getString(R.string.camera_scan_saved_safe)
         } else {
@@ -200,6 +189,38 @@ class CameraScanActivity : AppCompatActivity() {
             .setCancelable(true)
             .setPositiveButton(R.string.action_ok, null)
             .show()
+    }
+
+    private fun renderAllergenChips(detectedAllergens: List<String>) {
+        if (detectedAllergens == lastRenderedAllergens) {
+            return
+        }
+
+        lastRenderedAllergens = detectedAllergens
+
+        if (detectedAllergens.isEmpty()) {
+            binding.scrollAllergenChips.visibility = android.view.View.GONE
+            binding.chipGroupAllergens.removeAllViews()
+            return
+        }
+
+        runCatching {
+            binding.scrollAllergenChips.visibility = android.view.View.VISIBLE
+            binding.chipGroupAllergens.removeAllViews()
+            detectedAllergens.forEach { allergen ->
+                val chip = Chip(this, null, com.google.android.material.R.attr.chipStyle)
+                chip.text = allergen
+                chip.isCheckable = false
+                chip.isCloseIconVisible = false
+                chip.chipBackgroundColor = ColorStateList.valueOf(0xFFE53935.toInt())
+                chip.setTextColor(Color.WHITE)
+                binding.chipGroupAllergens.addView(chip)
+            }
+        }.onFailure {
+            binding.scrollAllergenChips.visibility = android.view.View.GONE
+            binding.chipGroupAllergens.removeAllViews()
+            lastRenderedAllergens = emptyList()
+        }
     }
 
     private fun ensureCameraPermissionAndStart() {
