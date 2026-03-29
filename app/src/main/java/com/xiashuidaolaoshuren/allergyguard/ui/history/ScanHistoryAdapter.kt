@@ -13,7 +13,8 @@ import java.text.DateFormat
 import java.util.Date
 
 class ScanHistoryAdapter(
-    private val onItemClick: (ScanResult) -> Unit
+    private val onItemClick: (ScanResult) -> Unit,
+    private val onDeleteClick: (ScanResult) -> Unit
 ) : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistoryViewHolder>(DiffCallback) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScanHistoryViewHolder {
         val binding = ItemScanHistoryBinding.inflate(
@@ -21,7 +22,7 @@ class ScanHistoryAdapter(
             parent,
             false
         )
-        return ScanHistoryViewHolder(binding, onItemClick)
+        return ScanHistoryViewHolder(binding, onItemClick, onDeleteClick)
     }
 
     override fun onBindViewHolder(holder: ScanHistoryViewHolder, position: Int) {
@@ -30,7 +31,8 @@ class ScanHistoryAdapter(
 
     class ScanHistoryViewHolder(
         private val binding: ItemScanHistoryBinding,
-        private val onItemClick: (ScanResult) -> Unit
+        private val onItemClick: (ScanResult) -> Unit,
+        private val onDeleteClick: (ScanResult) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
         private val dateFormat: DateFormat = DateFormat.getDateTimeInstance(
             DateFormat.SHORT,
@@ -40,7 +42,18 @@ class ScanHistoryAdapter(
         fun bind(scanResult: ScanResult) {
             val context = binding.root.context
             binding.textScanTimestamp.text = dateFormat.format(Date(scanResult.timestamp))
-            binding.textScanSummary.text = scanResult.textContent
+            if (scanResult.textContent.isBlank()) {
+                binding.textScanSummary.text = context.getString(R.string.history_summary_safe)
+                binding.textScanSummary.setTextColor(
+                    context.getColor(android.R.color.darker_gray)
+                )
+            } else {
+                binding.textScanSummary.text = scanResult.textContent
+                val attrs = intArrayOf(android.R.attr.textColorPrimary)
+                val ta = context.obtainStyledAttributes(attrs)
+                binding.textScanSummary.setTextColor(ta.getColor(0, android.graphics.Color.BLACK))
+                ta.recycle()
+            }
             binding.textScanStatus.text = if (scanResult.hasAllergens) {
                 context.getString(R.string.history_status_allergen_detected)
             } else {
@@ -64,6 +77,9 @@ class ScanHistoryAdapter(
 
             binding.root.setOnClickListener {
                 onItemClick(scanResult)
+            }
+            binding.buttonDeleteScan.setOnClickListener {
+                onDeleteClick(scanResult)
             }
         }
     }

@@ -66,5 +66,7 @@
     <string name="error_alias_duplicate">This alias already exists.</string>
     <string name="allergen_delete_button_desc">Delete custom allergen</string>
     <string name="delete_allergen_confirm_title">Remove allergen</string>
-    <string name="delete_allergen_confirm_message">Remove \"%1$s\" and all its aliases? This cannot be undone.</string>
-</resources>
+    <string name="delete_allergen_confirm_message">Remove \"%1$s\" and all its aliases? This cannot be undone.</string>    <string name="history_delete_button_desc">Delete scan record</string>
+    <string name="history_delete_confirm_title">Delete scan</string>
+    <string name="history_delete_confirm_message">Remove this scan record? This cannot be undone.</string>
+    <string name="history_summary_safe">No allergens detected</string></resources>

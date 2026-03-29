@@ -203,7 +203,7 @@ class CameraScanViewModel(
                 ScanResult(
                     id = UUID.randomUUID().toString(),
                     timestamp = nowMs,
-                    textContent = mergedSessionText,
+                    textContent = savedAllergens.joinToString(", "),
                     hasAllergens = sessionHasAllergens,
                     location = encodedLocation
                 )

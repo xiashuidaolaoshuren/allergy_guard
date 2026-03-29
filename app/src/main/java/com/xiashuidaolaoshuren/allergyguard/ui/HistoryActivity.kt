@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.AppDatabase
 import com.xiashuidaolaoshuren.allergyguard.data.RoomScanHistoryRepository
@@ -52,9 +53,10 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        historyAdapter = ScanHistoryAdapter { scanResult ->
-            openMap(selectedScanId = scanResult.id)
-        }
+        historyAdapter = ScanHistoryAdapter(
+            onItemClick = { scanResult -> openMap(selectedScanId = scanResult.id) },
+            onDeleteClick = { scanResult -> confirmDelete(scanResult.id) }
+        )
         binding.recyclerHistory.apply {
             layoutManager = LinearLayoutManager(this@HistoryActivity)
             adapter = historyAdapter
@@ -63,6 +65,15 @@ class HistoryActivity : AppCompatActivity() {
         binding.buttonViewMap.setOnClickListener {
             openMap(selectedScanId = null)
         }
+    }
+
+    private fun confirmDelete(id: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.history_delete_confirm_title)
+            .setMessage(R.string.history_delete_confirm_message)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_delete) { _, _ -> viewModel.deleteScan(id) }
+            .show()
     }
 
     private fun openMap(selectedScanId: String?) {

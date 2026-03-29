@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.xiashuidaolaoshuren.allergyguard.data.ScanHistoryRepository
 import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +22,12 @@ class HistoryViewModel(
             scanHistoryRepository.scanHistory.collect { history ->
                 _scanHistory.value = history
             }
+        }
+    }
+
+    fun deleteScan(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            scanHistoryRepository.deleteScanResultById(id)
         }
     }
 
