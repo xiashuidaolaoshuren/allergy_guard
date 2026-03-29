@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
 import com.xiashuidaolaoshuren.allergyguard.databinding.ItemScanHistoryBinding
-import com.xiashuidaolaoshuren.allergyguard.logic.ScanLocationCodec
 import java.text.DateFormat
 import java.util.Date
 
@@ -16,6 +15,13 @@ class ScanHistoryAdapter(
     private val onItemClick: (ScanResult) -> Unit,
     private val onDeleteClick: (ScanResult) -> Unit
 ) : ListAdapter<ScanResult, ScanHistoryAdapter.ScanHistoryViewHolder>(DiffCallback) {
+    private var addressMap: Map<String, String> = emptyMap()
+
+    fun updateAddressMap(newAddressMap: Map<String, String>) {
+        addressMap = newAddressMap
+        notifyItemRangeChanged(0, itemCount)
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScanHistoryViewHolder {
         val binding = ItemScanHistoryBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -26,7 +32,7 @@ class ScanHistoryAdapter(
     }
 
     override fun onBindViewHolder(holder: ScanHistoryViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), addressMap)
     }
 
     class ScanHistoryViewHolder(
@@ -39,7 +45,7 @@ class ScanHistoryAdapter(
             DateFormat.SHORT
         )
 
-        fun bind(scanResult: ScanResult) {
+        fun bind(scanResult: ScanResult, addressMap: Map<String, String>) {
             val context = binding.root.context
             binding.textScanTimestamp.text = dateFormat.format(Date(scanResult.timestamp))
             if (scanResult.textContent.isBlank()) {
@@ -60,9 +66,8 @@ class ScanHistoryAdapter(
                 context.getString(R.string.history_status_safe)
             }
 
-            val coordinate = ScanLocationCodec.decode(scanResult.location)
-            binding.textScanLocation.text = if (coordinate != null) {
-                context.getString(R.string.history_location_format, coordinate.latitude, coordinate.longitude)
+            binding.textScanLocation.text = if (!scanResult.location.isNullOrBlank()) {
+                addressMap[scanResult.location] ?: context.getString(R.string.history_location_resolving)
             } else {
                 context.getString(R.string.history_location_unknown)
             }

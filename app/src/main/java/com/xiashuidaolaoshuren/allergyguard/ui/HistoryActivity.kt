@@ -28,7 +28,7 @@ class HistoryActivity : AppCompatActivity() {
     private val viewModel: HistoryViewModel by viewModels {
         val scanHistoryDao = AppDatabase.getInstance(applicationContext).scanHistoryDao()
         val repository = RoomScanHistoryRepository(scanHistoryDao)
-        HistoryViewModel.Factory(repository)
+        HistoryViewModel.Factory(applicationContext, repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,12 +87,20 @@ class HistoryActivity : AppCompatActivity() {
     private fun observeScanHistory() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.scanHistory.collect { history ->
-                    historyAdapter.submitList(history)
-                    binding.textHistoryEmpty.visibility = if (history.isEmpty()) {
-                        View.VISIBLE
-                    } else {
-                        View.GONE
+                launch {
+                    viewModel.scanHistory.collect { history ->
+                        historyAdapter.submitList(history)
+                        binding.textHistoryEmpty.visibility = if (history.isEmpty()) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.addressMap.collect { addressMap ->
+                        historyAdapter.updateAddressMap(addressMap)
                     }
                 }
             }
