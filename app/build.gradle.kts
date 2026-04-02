@@ -16,7 +16,11 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        manifestPlaceholders["MAPS_API_KEY"] = project.findProperty("MAPS_API_KEY")?.toString() ?: ""
+        
+        // Try to get MAPS_API_KEY from: project property → rootProject extra → empty string
+        val mapsApiKey = project.findProperty("MAPS_API_KEY")?.toString()
+            ?: if (rootProject.extra.has("MAPS_API_KEY")) rootProject.extra.get("MAPS_API_KEY").toString() else ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

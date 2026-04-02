@@ -40,7 +40,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonBack"
         tools:text="Camera permission is required." />
 
     <com.google.android.material.button.MaterialButton
@@ -51,7 +51,6 @@
         android:layout_margin="16dp"
         android:contentDescription="@string/camera_back"
         app:icon="@drawable/ic_arrow_back"
-        app:iconGravity="textStart"
         app:iconPadding="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -76,7 +75,6 @@
         android:layout_marginEnd="8dp"
         android:contentDescription="@string/camera_flip"
         app:icon="@drawable/ic_camera_flip"
-        app:iconGravity="textStart"
         app:iconPadding="0dp"
         app:layout_constraintEnd_toStartOf="@id/buttonScriptSelector"
         app:layout_constraintTop_toTopOf="parent"
@@ -105,14 +103,16 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonScan"
-        style="@style/Widget.Material3.Button"
+        style="@style/Widget.Material3.Button.Icon"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginBottom="16dp"
         android:contentDescription="@string/camera_scan_button"
         app:backgroundTint="@color/white"
-        app:cornerRadius="36dp"
+        app:cornerRadius="40dp"
         app:icon="@drawable/ic_home_scan"
+        app:iconPadding="0dp"
+        app:iconSize="36dp"
         app:iconTint="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
