@@ -14,6 +14,7 @@ object AllergenTextMatcher {
         recognizedText: String,
         allergenSynonyms: Map<String, List<String>>
     ): List<String> {
+        val startMs = OcrDebugProfiler.frameStartToken()
         if (recognizedText.isBlank() || allergenSynonyms.isEmpty()) {
             return emptyList()
         }
@@ -28,7 +29,7 @@ object AllergenTextMatcher {
             .map(::normalize)
             .filter { it.isNotBlank() }
 
-        return allergenSynonyms.keys.filter { allergenName ->
+        val matches = allergenSynonyms.keys.filter { allergenName ->
             val allTerms = buildList {
                 add(allergenName)
                 addAll(allergenSynonyms[allergenName] ?: emptyList())
@@ -41,6 +42,10 @@ object AllergenTextMatcher {
                 }
             }
         }
+
+        val latencyMs = OcrDebugProfiler.frameStartToken() - startMs
+        OcrDebugProfiler.markMatcherLatency(latencyMs = latencyMs, tokenCount = tokens.size)
+        return matches
     }
 
     private fun normalize(input: String): String {

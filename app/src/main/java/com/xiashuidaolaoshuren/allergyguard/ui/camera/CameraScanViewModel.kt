@@ -13,6 +13,7 @@ import com.xiashuidaolaoshuren.allergyguard.data.AllergenAliasRepository
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenSynonymMap
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
+import com.xiashuidaolaoshuren.allergyguard.logic.OcrDebugProfiler
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanCoordinate
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanLocationCodec
 import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
@@ -106,12 +107,16 @@ class CameraScanViewModel(
                     _uiState.value = _uiState.value.copy(
                         statusMessageResId = R.string.translation_status_downloading
                     )
+                    val translationStartMs = OcrDebugProfiler.frameStartToken()
                     coroutineScope {
                         frameData.textBlocks.map { block ->
                             async {
                                 TranslationManager.translateText(block.text, sourceLang) ?: block.text
                             }
                         }.awaitAll()
+                    }.also {
+                        val translationLatencyMs = OcrDebugProfiler.frameStartToken() - translationStartMs
+                        OcrDebugProfiler.markTranslationLatency(translationLatencyMs)
                     }
                 } else {
                     frameData.textBlocks.map { it.text }
@@ -174,6 +179,10 @@ class CameraScanViewModel(
         sessionTextChunks.add(normalized)
         sessionDetectedAllergens.addAll(matchedAllergens)
         sessionHasAllergens = sessionHasAllergens || matchedAllergens.isNotEmpty()
+        OcrDebugProfiler.markSessionBufferSize(
+            textChunkCount = sessionTextChunks.size,
+            allergenCount = sessionDetectedAllergens.size
+        )
     }
 
     fun onScanButtonPressed() {

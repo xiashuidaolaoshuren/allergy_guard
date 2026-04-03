@@ -36,17 +36,22 @@ class CameraFrameAnalyzer(
     override fun analyze(image: ImageProxy) {
         val frameIndex = frameCounter.getAndIncrement()
         if (!shouldProcessFrame(frameIndex, processEveryNFrames)) {
+            OcrDebugProfiler.markFrameSkipped()
             image.close()
             return
         }
 
         if (!isProcessingFrame.compareAndSet(false, true)) {
+            OcrDebugProfiler.markFrameBusyDropped()
             image.close()
             return
         }
 
+        val frameStartToken = OcrDebugProfiler.frameStartToken()
+
         val mediaImage = image.image
         if (mediaImage == null) {
+            OcrDebugProfiler.markFrameBusyDropped()
             isProcessingFrame.set(false)
             image.close()
             return
@@ -68,6 +73,8 @@ class CameraFrameAnalyzer(
                         )
                     }
                 }
+                val latencyMs = OcrDebugProfiler.frameStartToken() - frameStartToken
+                OcrDebugProfiler.markOcrSuccess(latencyMs = latencyMs, blockCount = blocks.size)
 
                 onTextRecognized(
                     OcrFrameData(
@@ -80,6 +87,8 @@ class CameraFrameAnalyzer(
                 )
             }
             .addOnFailureListener(callbackExecutor) { error ->
+                val latencyMs = OcrDebugProfiler.frameStartToken() - frameStartToken
+                OcrDebugProfiler.markOcrFailure(latencyMs)
                 Log.e(TAG, "OCR analysis failed", error)
                 onOcrError()
             }
