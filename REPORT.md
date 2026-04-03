@@ -35,7 +35,7 @@ This screen allows users to define their safety profile through a robust data-dr
 
 ### Scan History & Map View
 Provides a historical log and geographic context for where allergens were encountered.
-*   **Automated Logging**: Every time a scan detects an allergen (and passes a 5-second deduplication cooldown), a `ScanResult` entity is saved to the local database. Each entry includes a timestamp, the target text, and a boolean flag for allergen presence.
+*   **Automated Logging**: Every time a scan detects an allergen and the save scan button is pressed, a `ScanResult` entity is saved to the local database. Each entry includes a timestamp, the target text, and a boolean flag for allergen presence.
 *   **Geospatial Integration**: The app requests location permissions to use the **Google Play Services Location API**. Using `FusedLocationProviderClient`, we capture the user's coordinates at the moment of scanning.
 *   **Reverse Geocoding & Visualization**: A `Geocoder` service runs on `Dispatchers.IO` to transform latitude/longitude pairs into human-readable addresses (Street, District, City). The history screen features a "View Map" button that opens **Google Maps SDK for Android**, plotting all safety-critical scans as interactive markers.
 
