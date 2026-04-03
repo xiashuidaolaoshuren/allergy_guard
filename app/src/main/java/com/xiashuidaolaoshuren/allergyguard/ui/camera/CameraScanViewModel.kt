@@ -12,14 +12,12 @@ import com.xiashuidaolaoshuren.allergyguard.data.ScanResult
 import com.xiashuidaolaoshuren.allergyguard.data.AllergenAliasRepository
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenSynonymMap
 import com.xiashuidaolaoshuren.allergyguard.logic.AllergenTextMatcher
-import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
+import com.xiashuidaolaoshuren.allergyguard.logic.CjkFoodTermSubstitutions
 import com.xiashuidaolaoshuren.allergyguard.logic.OcrDebugProfiler
+import com.xiashuidaolaoshuren.allergyguard.logic.OcrFrameData
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanCoordinate
 import com.xiashuidaolaoshuren.allergyguard.logic.ScanLocationCodec
 import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,23 +101,22 @@ class CameraScanViewModel(
                 val needsTranslation = sourceLang != TranslateLanguage.ENGLISH &&
                     sourceLang != "und"
 
-                val blockTextsForMatching = if (needsTranslation) {
+                val normalizedBlockTexts = frameData.textBlocks.map { block ->
+                    CjkFoodTermSubstitutions.apply(block.text)
+                }
+                val originalFrameText = normalizedBlockTexts.joinToString(separator = " ")
+
+                val translatedFrameText = if (needsTranslation) {
                     _uiState.value = _uiState.value.copy(
                         statusMessageResId = R.string.translation_status_downloading
                     )
                     val translationStartMs = OcrDebugProfiler.frameStartToken()
-                    coroutineScope {
-                        frameData.textBlocks.map { block ->
-                            async {
-                                TranslationManager.translateText(block.text, sourceLang) ?: block.text
-                            }
-                        }.awaitAll()
-                    }.also {
+                    (TranslationManager.translateText(originalFrameText, sourceLang) ?: originalFrameText).also {
                         val translationLatencyMs = OcrDebugProfiler.frameStartToken() - translationStartMs
                         OcrDebugProfiler.markTranslationLatency(translationLatencyMs)
                     }
                 } else {
-                    frameData.textBlocks.map { it.text }
+                    originalFrameText
                 }
 
                 if (needsTranslation) {
@@ -127,12 +124,13 @@ class CameraScanViewModel(
                     TranslationManager.downloadModel(sourceLang)
                 }
 
-                val currentText = blockTextsForMatching.joinToString(separator = " ")
-                val matchedAllergens = AllergenTextMatcher.findMatches(currentText, allergenSynonymMap)
+                val translatedMatches = AllergenTextMatcher.findMatches(translatedFrameText, allergenSynonymMap)
+                val originalMatches = AllergenTextMatcher.findMatches(originalFrameText, allergenSynonymMap)
+                val matchedAllergens = (translatedMatches + originalMatches).distinct()
 
                 val overlayBlocks = frameData.textBlocks.mapIndexed { index, block ->
                     val blockMatches = AllergenTextMatcher.findMatches(
-                        blockTextsForMatching[index],
+                        normalizedBlockTexts[index],
                         allergenSynonymMap
                     )
                     OverlayBlockUi(
@@ -149,7 +147,7 @@ class CameraScanViewModel(
                     isFrontCamera = frameData.isFrontCamera
                 )
 
-                addFrameToSessionBuffer(currentText, matchedAllergens.distinct())
+                addFrameToSessionBuffer(originalFrameText, matchedAllergens)
 
                 if (matchedAllergens.isEmpty()) {
                     _uiState.value = CameraUiState(
@@ -160,7 +158,7 @@ class CameraScanViewModel(
                 } else {
                     _uiState.value = CameraUiState(
                         showStatus = false,
-                        detectedAllergens = matchedAllergens.distinct(),
+                        detectedAllergens = matchedAllergens,
                         overlayFrame = overlayFrame
                     )
                 }

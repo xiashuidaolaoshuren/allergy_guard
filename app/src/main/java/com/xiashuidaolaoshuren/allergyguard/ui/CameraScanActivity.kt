@@ -61,12 +61,13 @@ class CameraScanActivity : AppCompatActivity() {
     private var selectedScript: OcrScript = OcrScript.LATIN
     private var isFrontCamera: Boolean = false
     private var lastRenderedAllergens: List<String> = emptyList()
+    private var pendingBindRequest: Boolean = false
 
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.onPermissionResult(isGranted)
             if (isGranted) {
-                bindCameraUseCases()
+                startCameraWhenPreviewReady()
             }
         }
 
@@ -85,6 +86,8 @@ class CameraScanActivity : AppCompatActivity() {
         binding = ActivityCameraScanBinding.inflate(layoutInflater)
         setContentView(binding.root)
         title = getString(R.string.camera_scan_title)
+        // TextureView mode avoids SurfaceView size/position glitches on some devices.
+        binding.previewViewCamera.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         binding.previewViewCamera.scaleType = PreviewView.ScaleType.FILL_CENTER
         selectedScript = loadSelectedScript()
         updateScriptSelectorLabel()
@@ -97,7 +100,7 @@ class CameraScanActivity : AppCompatActivity() {
         }
         binding.buttonFlipCamera.setOnClickListener {
             isFrontCamera = !isFrontCamera
-            bindCameraUseCases()
+            startCameraWhenPreviewReady()
         }
         binding.buttonScan.setOnClickListener {
             viewModel.onScanButtonPressed()
@@ -109,13 +112,6 @@ class CameraScanActivity : AppCompatActivity() {
         observeUiState()
         ensureLocationPermissionOptional()
         ensureCameraPermissionAndStart()
-    }
-
-    override fun onDestroy() {
-        frameAnalyzer?.close()
-        frameAnalyzer = null
-        cameraExecutor.shutdown()
-        super.onDestroy()
     }
 
     private fun setupInsets() {
@@ -231,10 +227,53 @@ class CameraScanActivity : AppCompatActivity() {
 
         if (isGranted) {
             viewModel.onPermissionResult(true)
-            bindCameraUseCases()
+            startCameraWhenPreviewReady()
         } else {
             requestCameraPermission.launch(Manifest.permission.CAMERA)
         }
+    }
+
+    private fun startCameraWhenPreviewReady() {
+        if (pendingBindRequest) {
+            return
+        }
+        pendingBindRequest = true
+        scheduleBindCameraUseCases(retriesRemaining = CAMERA_BIND_MAX_RETRIES)
+    }
+
+    private fun scheduleBindCameraUseCases(retriesRemaining: Int) {
+        binding.previewViewCamera.post {
+            val previewReady = binding.previewViewCamera.isAttachedToWindow &&
+                binding.previewViewCamera.width > 0 &&
+                binding.previewViewCamera.height > 0
+
+            if (previewReady) {
+                pendingBindRequest = false
+                bindCameraUseCases()
+                return@post
+            }
+
+            if (retriesRemaining > 0) {
+                scheduleBindCameraUseCases(retriesRemaining - 1)
+                return@post
+            }
+
+            pendingBindRequest = false
+            viewModel.onCameraInitError()
+        }
+    }
+
+    override fun onStop() {
+        pendingBindRequest = false
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        pendingBindRequest = false
+        frameAnalyzer?.close()
+        frameAnalyzer = null
+        cameraExecutor.shutdown()
+        super.onDestroy()
     }
 
     private fun ensureLocationPermissionOptional() {
@@ -275,7 +314,7 @@ class CameraScanActivity : AppCompatActivity() {
                 }
 
                 val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(binding.previewViewCamera.getSurfaceProvider())
+                    it.setSurfaceProvider(binding.previewViewCamera.surfaceProvider)
                 }
 
                 val imageAnalysis = ImageAnalysis.Builder()
@@ -287,7 +326,7 @@ class CameraScanActivity : AppCompatActivity() {
                             callbackExecutor = ContextCompat.getMainExecutor(this@CameraScanActivity),
                             onTextRecognized = viewModel::onTextRecognized,
                             onOcrError = viewModel::onOcrError,
-                            processEveryNFrames = OCR_PROCESS_EVERY_N_FRAMES,
+                            processEveryNFrames = ocrProcessEveryNFrames(selectedScript),
                             isFrontCamera = effectiveFrontCamera,
                             script = selectedScript
                         )
@@ -341,7 +380,7 @@ class CameraScanActivity : AppCompatActivity() {
                     selectedScript = newScript
                     persistSelectedScript(newScript)
                     updateScriptSelectorLabel()
-                    bindCameraUseCases()
+                    startCameraWhenPreviewReady()
                 }
                 dialog.dismiss()
             }
@@ -376,8 +415,19 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     private companion object {
-        const val OCR_PROCESS_EVERY_N_FRAMES = 3
+        const val OCR_PROCESS_EVERY_N_FRAMES_LATIN = 3
+        const val OCR_PROCESS_EVERY_N_FRAMES_NON_LATIN = 1
         const val PREFS_NAME = "camera_scan_prefs"
         const val KEY_SELECTED_SCRIPT = "selected_ocr_script"
+        const val CAMERA_BIND_MAX_RETRIES = 8
+    }
+
+    private fun ocrProcessEveryNFrames(script: OcrScript): Int {
+        return when (script) {
+            OcrScript.LATIN -> OCR_PROCESS_EVERY_N_FRAMES_LATIN
+            OcrScript.CHINESE,
+            OcrScript.JAPANESE,
+            OcrScript.KOREAN -> OCR_PROCESS_EVERY_N_FRAMES_NON_LATIN
+        }
     }
 }
