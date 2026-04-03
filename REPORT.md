@@ -40,8 +40,7 @@ Provides a historical log and geographic context for where allergens were encoun
 *   **Reverse Geocoding & Visualization**: A `Geocoder` service runs on `Dispatchers.IO` to transform latitude/longitude pairs into human-readable addresses (Street, District, City). The history screen features a "View Map" button that opens **Google Maps SDK for Android**, plotting all safety-critical scans as interactive markers.
 
 ### Settings View
-Manages the configuration for global traveling support.
-*   **Translation Model Lifecycle**: For the "Menu Translation" feature, we use **ML Kit's On-Device Translation**. The settings view provides a `RecyclerView` of available language models (e.g., Japanese, French).
+Manages the configuration for the app's translation and scanning features.
 *   **Model Management**: Using the `TranslationManager` singleton, we handle the downloading and status tracking of each language model. This allows the app to perform real-time translation entirely offline once the models are cached, which is crucial for travelers without international roaming.
 
 ## 3. Technical Difficulties
