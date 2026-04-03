@@ -24,9 +24,8 @@ object AllergenTextMatcher {
             return emptyList()
         }
 
-        val tokens = recognizedText
+        val tokens = normalizedText
             .split(Regex("\\s+"))
-            .map(::normalize)
             .filter { it.isNotBlank() }
 
         val matches = allergenSynonyms.keys.filter { allergenName ->
@@ -37,7 +36,7 @@ object AllergenTextMatcher {
             allTerms.any { term ->
                 val normalizedTerm = normalize(term)
                 if (normalizedTerm.isBlank()) return@any false
-                normalizedText.contains(normalizedTerm) || tokens.any { token ->
+                containsWholeTerm(normalizedText, normalizedTerm) || tokens.any { token ->
                     levenshteinDistance(token, normalizedTerm) <= maxDistance(normalizedTerm.length)
                 }
             }
@@ -51,7 +50,29 @@ object AllergenTextMatcher {
     private fun normalize(input: String): String {
         return input
             .lowercase()
-            .replace(Regex("[^\\p{L}\\p{N}]"), "")
+            .replace(Regex("[^\\p{L}\\p{N}\\s]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun containsWholeTerm(normalizedText: String, normalizedTerm: String): Boolean {
+        if (containsCjk(normalizedTerm)) {
+            return normalizedText.contains(normalizedTerm)
+        }
+
+        val pattern = Regex("(?<![\\p{L}\\p{N}])${Regex.escape(normalizedTerm)}(?![\\p{L}\\p{N}])")
+        return pattern.containsMatchIn(normalizedText)
+    }
+
+    private fun containsCjk(text: String): Boolean {
+        return text.any { char ->
+            Character.UnicodeScript.of(char.code) in setOf(
+                Character.UnicodeScript.HAN,
+                Character.UnicodeScript.HIRAGANA,
+                Character.UnicodeScript.KATAKANA,
+                Character.UnicodeScript.HANGUL
+            )
+        }
     }
 
     private fun maxDistance(length: Int): Int {

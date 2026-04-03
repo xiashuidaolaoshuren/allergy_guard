@@ -44,7 +44,10 @@ object OcrDebugProfiler {
         }.getOrDefault(false)
     }
 
-    fun frameStartToken(): Long = SystemClock.elapsedRealtime()
+    fun frameStartToken(): Long {
+        return runCatching { SystemClock.elapsedRealtime() }
+            .getOrElse { System.nanoTime() / 1_000_000L }
+    }
 
     @Synchronized
     fun markFrameSkipped() {
