@@ -9,6 +9,6 @@
     <item android:inset="20%">
         <bitmap
             android:src="@drawable/logo"
-            android:gravity="center" />
+            android:gravity="fill" />
     </item>
 </layer-list>
