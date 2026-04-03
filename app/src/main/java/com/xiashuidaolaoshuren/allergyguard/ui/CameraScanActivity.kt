@@ -68,6 +68,7 @@ class CameraScanActivity : AppCompatActivity() {
             viewModel.onPermissionResult(isGranted)
             if (isGranted) {
                 startCameraWhenPreviewReady()
+                ensureLocationPermissionOptional()
             }
         }
 
@@ -110,7 +111,6 @@ class CameraScanActivity : AppCompatActivity() {
 
         setupInsets()
         observeUiState()
-        ensureLocationPermissionOptional()
         ensureCameraPermissionAndStart()
     }
 
@@ -228,6 +228,7 @@ class CameraScanActivity : AppCompatActivity() {
         if (isGranted) {
             viewModel.onPermissionResult(true)
             startCameraWhenPreviewReady()
+            ensureLocationPermissionOptional()
         } else {
             requestCameraPermission.launch(Manifest.permission.CAMERA)
         }
