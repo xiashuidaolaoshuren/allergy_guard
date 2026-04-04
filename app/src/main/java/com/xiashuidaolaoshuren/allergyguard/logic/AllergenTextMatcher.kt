@@ -1,5 +1,8 @@
 package com.xiashuidaolaoshuren.allergyguard.logic
 
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
+
 object AllergenTextMatcher {
     /**
      * Finds which allergens are present in [recognizedText].
@@ -27,6 +30,7 @@ object AllergenTextMatcher {
         val tokens = normalizedText
             .split(Regex("\\s+"))
             .filter { it.isNotBlank() }
+        val tokenSet = tokens.toHashSet()
 
         val matches = allergenSynonyms.keys.filter { allergenName ->
             val allTerms = buildList {
@@ -37,7 +41,11 @@ object AllergenTextMatcher {
                 val normalizedTerm = normalize(term)
                 if (normalizedTerm.isBlank()) return@any false
                 containsWholeTerm(normalizedText, normalizedTerm) || tokens.any { token ->
-                    levenshteinDistance(token, normalizedTerm) <= maxDistance(normalizedTerm.length)
+                    val allowedDistance = maxDistance(normalizedTerm.length)
+                    token == normalizedTerm ||
+                        (normalizedTerm !in tokenSet &&
+                            abs(token.length - normalizedTerm.length) <= allowedDistance &&
+                            levenshteinDistance(token, normalizedTerm) <= allowedDistance)
                 }
             }
         }
@@ -50,8 +58,8 @@ object AllergenTextMatcher {
     private fun normalize(input: String): String {
         return input
             .lowercase()
-            .replace(Regex("[^\\p{L}\\p{N}\\s]"), " ")
-            .replace(Regex("\\s+"), " ")
+            .replace(NON_WORD_REGEX, " ")
+            .replace(WHITESPACE_REGEX, " ")
             .trim()
     }
 
@@ -60,18 +68,15 @@ object AllergenTextMatcher {
             return normalizedText.contains(normalizedTerm)
         }
 
-        val pattern = Regex("(?<![\\p{L}\\p{N}])${Regex.escape(normalizedTerm)}(?![\\p{L}\\p{N}])")
+        val pattern = WHOLE_TERM_PATTERN_CACHE.getOrPut(normalizedTerm) {
+            Regex("(?<![\\p{L}\\p{N}])${Regex.escape(normalizedTerm)}(?![\\p{L}\\p{N}])")
+        }
         return pattern.containsMatchIn(normalizedText)
     }
 
     private fun containsCjk(text: String): Boolean {
         return text.any { char ->
-            Character.UnicodeScript.of(char.code) in setOf(
-                Character.UnicodeScript.HAN,
-                Character.UnicodeScript.HIRAGANA,
-                Character.UnicodeScript.KATAKANA,
-                Character.UnicodeScript.HANGUL
-            )
+            Character.UnicodeScript.of(char.code) in CJK_SCRIPTS
         }
     }
 
@@ -108,4 +113,14 @@ object AllergenTextMatcher {
 
         return previousRow[b.length]
     }
+
+    private val NON_WORD_REGEX = Regex("[^\\p{L}\\p{N}\\s]")
+    private val WHITESPACE_REGEX = Regex("\\s+")
+    private val WHOLE_TERM_PATTERN_CACHE = ConcurrentHashMap<String, Regex>()
+    private val CJK_SCRIPTS = setOf(
+        Character.UnicodeScript.HAN,
+        Character.UnicodeScript.HIRAGANA,
+        Character.UnicodeScript.KATAKANA,
+        Character.UnicodeScript.HANGUL
+    )
 }

@@ -417,7 +417,7 @@ class CameraScanActivity : AppCompatActivity() {
 
     private companion object {
         const val OCR_PROCESS_EVERY_N_FRAMES_LATIN = 3
-        const val OCR_PROCESS_EVERY_N_FRAMES_NON_LATIN = 1
+        const val OCR_PROCESS_EVERY_N_FRAMES_NON_LATIN = 3
         const val PREFS_NAME = "camera_scan_prefs"
         const val KEY_SELECTED_SCRIPT = "selected_ocr_script"
         const val CAMERA_BIND_MAX_RETRIES = 8

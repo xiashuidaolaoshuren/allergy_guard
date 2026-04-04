@@ -30,6 +30,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
+private data class FrameProcessingResult(
+    val matchedAllergens: List<String>,
+    val overlayFrame: CameraScanViewModel.OverlayFrameUi,
+    val frameTextForBuffer: String
+)
+
 class CameraScanViewModel(
     private val repository: AllergenRepository,
     private val scanHistoryRepository: ScanHistoryRepository,
@@ -97,26 +103,71 @@ class CameraScanViewModel(
             isProcessing = true
             try {
                 // Determine if we need translation
-                val sourceLang = TranslationManager.identifyLanguage(frameData.fullText)
+                val sourceLang = withContext(Dispatchers.Default) {
+                    TranslationManager.identifyLanguage(frameData.fullText)
+                }
                 val needsTranslation = sourceLang != TranslateLanguage.ENGLISH &&
                     sourceLang != "und"
 
-                val normalizedBlockTexts = frameData.textBlocks.map { block ->
-                    CjkFoodTermSubstitutions.apply(block.text)
-                }
-                val originalFrameText = normalizedBlockTexts.joinToString(separator = " ")
-
-                val translatedFrameText = if (needsTranslation) {
+                if (needsTranslation) {
                     _uiState.value = _uiState.value.copy(
                         statusMessageResId = R.string.translation_status_downloading
                     )
-                    val translationStartMs = OcrDebugProfiler.frameStartToken()
-                    (TranslationManager.translateText(originalFrameText, sourceLang) ?: originalFrameText).also {
-                        val translationLatencyMs = OcrDebugProfiler.frameStartToken() - translationStartMs
-                        OcrDebugProfiler.markTranslationLatency(translationLatencyMs)
+                }
+
+                val processingResult = withContext(Dispatchers.Default) {
+                    val normalizedBlockTexts = frameData.textBlocks.map { block ->
+                        CjkFoodTermSubstitutions.apply(block.text)
                     }
-                } else {
-                    originalFrameText
+                    val originalFrameText = normalizedBlockTexts.joinToString(separator = " ")
+
+                    val translatedFrameTextOrNull = if (needsTranslation) {
+                        val translationStartMs = OcrDebugProfiler.frameStartToken()
+                        TranslationManager.translateText(originalFrameText, sourceLang).also {
+                            val translationLatencyMs = OcrDebugProfiler.frameStartToken() - translationStartMs
+                            OcrDebugProfiler.markTranslationLatency(translationLatencyMs)
+                        }
+                    } else {
+                        null
+                    }
+
+                    val primaryMatchText = translatedFrameTextOrNull ?: originalFrameText
+                    val primaryMatches = AllergenTextMatcher.findMatches(primaryMatchText, allergenSynonymMap)
+                    val fallbackOriginalMatches = if (
+                        translatedFrameTextOrNull != null &&
+                        translatedFrameTextOrNull != originalFrameText &&
+                        primaryMatches.isEmpty()
+                    ) {
+                        AllergenTextMatcher.findMatches(originalFrameText, allergenSynonymMap)
+                    } else {
+                        emptyList()
+                    }
+                    val matchedAllergens = (primaryMatches + fallbackOriginalMatches).distinct()
+
+                    val overlayBlocks = frameData.textBlocks.mapIndexed { index, block ->
+                        val blockMatches = AllergenTextMatcher.findMatches(
+                            normalizedBlockTexts[index],
+                            allergenSynonymMap
+                        )
+                        OverlayBlockUi(
+                            text = block.text,
+                            sourceBoundingBox = block.boundingBox,
+                            isAllergen = blockMatches.isNotEmpty()
+                        )
+                    }
+
+                    val overlayFrame = OverlayFrameUi(
+                        blocks = overlayBlocks,
+                        sourceWidth = frameData.sourceWidth,
+                        sourceHeight = frameData.sourceHeight,
+                        isFrontCamera = frameData.isFrontCamera
+                    )
+
+                    FrameProcessingResult(
+                        matchedAllergens = matchedAllergens,
+                        overlayFrame = overlayFrame,
+                        frameTextForBuffer = originalFrameText
+                    )
                 }
 
                 if (needsTranslation) {
@@ -124,42 +175,19 @@ class CameraScanViewModel(
                     TranslationManager.downloadModel(sourceLang)
                 }
 
-                val translatedMatches = AllergenTextMatcher.findMatches(translatedFrameText, allergenSynonymMap)
-                val originalMatches = AllergenTextMatcher.findMatches(originalFrameText, allergenSynonymMap)
-                val matchedAllergens = (translatedMatches + originalMatches).distinct()
+                addFrameToSessionBuffer(processingResult.frameTextForBuffer, processingResult.matchedAllergens)
 
-                val overlayBlocks = frameData.textBlocks.mapIndexed { index, block ->
-                    val blockMatches = AllergenTextMatcher.findMatches(
-                        normalizedBlockTexts[index],
-                        allergenSynonymMap
-                    )
-                    OverlayBlockUi(
-                        text = block.text,
-                        sourceBoundingBox = block.boundingBox,
-                        isAllergen = blockMatches.isNotEmpty()
-                    )
-                }
-
-                val overlayFrame = OverlayFrameUi(
-                    blocks = overlayBlocks,
-                    sourceWidth = frameData.sourceWidth,
-                    sourceHeight = frameData.sourceHeight,
-                    isFrontCamera = frameData.isFrontCamera
-                )
-
-                addFrameToSessionBuffer(originalFrameText, matchedAllergens)
-
-                if (matchedAllergens.isEmpty()) {
+                if (processingResult.matchedAllergens.isEmpty()) {
                     _uiState.value = CameraUiState(
                         showStatus = true,
                         statusMessageResId = R.string.camera_no_allergens_found,
-                        overlayFrame = overlayFrame
+                        overlayFrame = processingResult.overlayFrame
                     )
                 } else {
                     _uiState.value = CameraUiState(
                         showStatus = false,
-                        detectedAllergens = matchedAllergens,
-                        overlayFrame = overlayFrame
+                        detectedAllergens = processingResult.matchedAllergens,
+                        overlayFrame = processingResult.overlayFrame
                     )
                 }
             } finally {
