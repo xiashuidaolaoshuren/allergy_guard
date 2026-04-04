@@ -51,9 +51,9 @@ The core scanning functionality introduced several significant technical challen
 3. **OCR Noise and Accuracy**: Environmental factors like low light, crumpled packaging, or stylized menu fonts cause noisy text recognition. Tuning the fuzzy matching thresholds (handling length-dependent distance tolerance) to avoid false positives while catching true allergens required extensive trial and error.
 
 ## 4. Future Improvements
-While the current app is highly functional, several features could elevate the core experience outside the scope of the current course:
+While the current app is highly functional, several features could elevate the core experience. These improvements are considered out of the scope of the current course but represent potential directions for professional-grade development:
 
 1. **AI-Powered Ingredient Analysis**: Instead of simple keyword matching, the app could integrate a lightweight Large Language Model (LLM) API to infer allergen relationships. For instance, understanding that an ingredient like "Whey" or "Casein" implies "Milk"—even if the word "Milk" is missing from the label.
-2. **Cloud Sync & User Accounts**: Integrating Firebase Authentication and Firestore to allow users to back up their customized allergy profiles, custom aliases, and scan history across multiple devices.
-3. **Crowdsourcing / Social Community**: A feature allowing users to flag specific restaurant menus or packaged bar codes as "Allergy-Safe" or "Dangerous," creating a community-driven database of safe eating spots worldwide.
-4. **Enhanced Offline Capabilities**: Automatically caching translation and OCR models based on the user's upcoming travel destinations, ensuring a fully offline experience when roaming data is unavailable.
+2. **Advanced Performance Optimization**: While current frame-skipping works, implementing a more sophisticated backpressure strategy or using GPU-accelerated computing (via RenderScript or Vulkan) could allow for processing higher-resolution frames with even lower latency.
+3. **Expanded Language and Script Support**: Integration of additional OCR scripts (such as Arabic, Devanagari, or Cyrillic) and broader translation model support would make the app truly global, covering almost all major travel destinations.
+4. **Enhanced Offline Capabilities**: Implementing a "Travel Pack" feature that automatically pre-caches all necessary OCR and translation models based on a user's upcoming travel destinations, ensuring a seamless experience even in remote areas with zero connectivity.
