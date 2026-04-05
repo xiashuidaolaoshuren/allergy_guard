@@ -108,6 +108,73 @@ class AllergenTextMatcherTest {
         assertEquals("Milk should NOT be matched when only checking the name itself", emptyList<String>(), matches)
     }
 
+    @Test
+    fun matchesCheesecakeForMilkAndEggs() {
+        val matches = AllergenTextMatcher.findMatches(
+            recognizedText = "contains cheesecake",
+            allergenSynonyms = mapOf(
+                "Milk" to listOf("cheese", "cheesecake", "cake"),
+                "Eggs" to listOf("egg", "cheesecake", "cake")
+            )
+        )
+
+        assertTrue("Milk should be detected via 'cheesecake'", matches.contains("Milk"))
+        assertTrue("Eggs should be detected via 'cheesecake'", matches.contains("Eggs"))
+    }
+
+    @Test
+    fun matchesCantoneseCheesecakeForMilkAndEggs() {
+        val matches = AllergenTextMatcher.findMatches(
+            recognizedText = "今日甜品: 芝士蛋糕",
+            allergenSynonyms = mapOf(
+                "Milk" to listOf("芝士", "芝士蛋糕", "蛋糕"),
+                "Eggs" to listOf("蛋", "蛋糕", "芝士蛋糕")
+            )
+        )
+
+        assertTrue("Milk should be detected via '芝士蛋糕'", matches.contains("Milk"))
+        assertTrue("Eggs should be detected via '芝士蛋糕'", matches.contains("Eggs"))
+    }
+
+    @Test
+    fun doesNotMatchMilkOrEggsForFishCakeWhenOnlyCakeHeuristicProvided() {
+        val matches = AllergenTextMatcher.findMatches(
+            recognizedText = "Dim sum includes fish cake and fish balls",
+            allergenSynonyms = mapOf(
+                "Milk" to listOf("cake"),
+                "Eggs" to listOf("cake")
+            )
+        )
+
+        assertEquals(emptyList<String>(), matches)
+    }
+
+    @Test
+    fun doesNotMatchMilkOrEggsForTurnipCakeWhenOnlyCakeHeuristicProvided() {
+        val matches = AllergenTextMatcher.findMatches(
+            recognizedText = "點心: 蘿蔔糕",
+            allergenSynonyms = mapOf(
+                "Milk" to listOf("蛋糕"),
+                "Eggs" to listOf("蛋糕")
+            )
+        )
+
+        assertEquals(emptyList<String>(), matches)
+    }
+
+    @Test
+    fun stillMatchesMilkWhenFishCakeAndCheeseAppearTogether() {
+        val matches = AllergenTextMatcher.findMatches(
+            recognizedText = "fish cake with cheese topping",
+            allergenSynonyms = mapOf(
+                "Milk" to listOf("cake", "cheese"),
+                "Eggs" to listOf("cake")
+            )
+        )
+
+        assertTrue("Milk should still match via 'cheese'", matches.contains("Milk"))
+    }
+
     // Helper overload to keep old-style calls working in tests
     private fun mapOf(vararg pairs: Pair<String, List<String>>): Map<String, List<String>> =
         pairs.toMap()

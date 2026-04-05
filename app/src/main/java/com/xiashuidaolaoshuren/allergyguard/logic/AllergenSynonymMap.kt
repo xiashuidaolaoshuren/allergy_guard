@@ -18,14 +18,20 @@ object AllergenSynonymMap {
             "cheddar", "feta", "colby", "havarti", "goat cheese", "cream cheese",
             "cottage cheese", "ice cream", "gelato", "pudding", "ganache", "nougat",
             "caramel", "milk chocolate",
-            "milk", "牛奶", "牛乳", "乳製品", "奶", "ミルク", "牛乳", "우유"
+            "milk", "牛奶", "牛乳", "乳製品", "奶", "ミルク", "牛乳", "우유",
+            "芝士", "起司", "芝士蛋糕", "起司蛋糕", "cheesecake",
+            "cheese cake", "奶酪", "乳酪", "乾酪", "干酪",
+            "cake", "蛋糕", "ケーキ", "케이크"
         ),
         "eggs" to listOf(
             "egg", "yolk", "egg white", "albumin", "ovalbumin", "ovomucin",
             "ovomucoid", "ovotransferrin", "livetin", "lysozyme",
             "mayonnaise", "mayo", "meringue", "hollandaise", "aioli",
             "egg noodles", "egg pasta", "eggnog", "quiche", "frittata",
-            "玉子", "卵", "たまご", "鸡蛋", "雞蛋", "煎蛋", "蛋黃", "蛋白", "계란", "달걀"
+            "玉子", "卵", "たまご", "鸡蛋", "雞蛋", "煎蛋", "蛋黃", "蛋白", "계란", "달걀",
+            "芝士蛋糕", "起司蛋糕", "cheesecake",
+            "egg tart", "蛋撻", "蛋挞", "omelette", "omelet", "蒸蛋", "茶葉蛋", "茶叶蛋",
+            "cake", "蛋糕", "ケーキ", "케이크"
         ),
         "fish" to listOf(
             "salmon", "tuna", "cod", "halibut", "tilapia", "bass", "herring",
@@ -33,7 +39,8 @@ object AllergenSynonymMap {
             "trout", "catfish", "snapper", "grouper", "flounder", "sole",
             "pike", "carp", "perch", "pollock", "haddock", "swordfish",
             "fish sauce", "worcestershire", "caesar dressing",
-            "fish", "魚", "鱼", "鮭", "鲑", "吞拿魚", "tuna", "サーモン", "魚介", "생선"
+            "fish", "魚", "鱼", "鮭", "鲑", "吞拿魚", "tuna", "サーモン", "魚介", "생선",
+            "魚生", "鱼生", "刺身", "sashimi"
         ),
         "crustacean shellfish" to listOf(
             "shrimp", "crab", "lobster", "prawn", "crawfish", "crayfish",
@@ -51,7 +58,8 @@ object AllergenSynonymMap {
         "peanuts" to listOf(
             "peanut", "groundnut", "arachis", "monkey nut", "beer nut",
             "peanut butter", "peanut oil", "satay", "mixed nuts",
-            "花生", "花生醬", "花生酱", "落花生", "ピーナッツ", "땅콩"
+            "花生", "花生醬", "花生酱", "落花生", "ピーナッツ", "땅콩",
+            "peanut candy", "花生糖"
         ),
         "wheat" to listOf(
             "flour", "bread", "gluten", "spelt", "farro", "durum", "kamut",

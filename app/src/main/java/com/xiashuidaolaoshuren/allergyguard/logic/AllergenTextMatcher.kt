@@ -40,6 +40,9 @@ object AllergenTextMatcher {
             allTerms.any { term ->
                 val normalizedTerm = normalize(term)
                 if (normalizedTerm.isBlank()) return@any false
+                if (shouldSkipHeuristicTerm(allergenName, normalizedTerm, normalizedText)) {
+                    return@any false
+                }
                 containsWholeTerm(normalizedText, normalizedTerm) || tokens.any { token ->
                     val allowedDistance = maxDistance(normalizedTerm.length)
                     token == normalizedTerm ||
@@ -77,6 +80,22 @@ object AllergenTextMatcher {
     private fun containsCjk(text: String): Boolean {
         return text.any { char ->
             Character.UnicodeScript.of(char.code) in CJK_SCRIPTS
+        }
+    }
+
+    private fun shouldSkipHeuristicTerm(
+        allergenName: String,
+        normalizedTerm: String,
+        normalizedText: String
+    ): Boolean {
+        val normalizedAllergen = normalize(allergenName)
+        val heuristicTerms = HEURISTIC_TERMS_BY_ALLERGEN[normalizedAllergen] ?: return false
+        if (normalizedTerm !in heuristicTerms) {
+            return false
+        }
+
+        return CAKE_EXCEPTION_TERMS.any { exceptionTerm ->
+            containsWholeTerm(normalizedText, exceptionTerm)
         }
     }
 
@@ -123,4 +142,20 @@ object AllergenTextMatcher {
         Character.UnicodeScript.KATAKANA,
         Character.UnicodeScript.HANGUL
     )
+    private val HEURISTIC_TERMS_BY_ALLERGEN = mapOf(
+        "milk" to setOf("cake", "蛋糕", "ケーキ", "케이크"),
+        "eggs" to setOf("cake", "蛋糕", "ケーキ", "케이크")
+    )
+    private val CAKE_EXCEPTION_TERMS = setOf(
+        "fish cake",
+        "fishcake",
+        "魚餅",
+        "鱼饼",
+        "turnip cake",
+        "蘿蔔糕",
+        "萝卜糕",
+        "rice cake",
+        "年糕",
+        "mochi"
+    ).map(::normalize).toSet()
 }
