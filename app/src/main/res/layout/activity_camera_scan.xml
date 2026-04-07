@@ -101,22 +101,27 @@
 
     </HorizontalScrollView>
 
-    <com.google.android.material.button.MaterialButton
+    <FrameLayout
         android:id="@+id/buttonScan"
-        style="@style/Widget.Material3.Button.Icon"
         android:layout_width="72dp"
         android:layout_height="72dp"
         android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_scan_button"
+        android:clickable="true"
         android:contentDescription="@string/camera_scan_button"
-        app:backgroundTint="@color/white"
-        app:cornerRadius="40dp"
-        app:icon="@drawable/ic_home_scan"
-        app:iconPadding="0dp"
-        app:iconSize="36dp"
-        app:iconTint="@color/black"
+        android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:rippleColor="@color/black" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_home_scan"
+            android:tint="@color/black" />
+
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
