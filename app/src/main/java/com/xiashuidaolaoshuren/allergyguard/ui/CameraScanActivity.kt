@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -115,11 +117,40 @@ class CameraScanActivity : AppCompatActivity() {
     }
 
     private fun setupInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.cameraScanRoot) { view, insets ->
+        val backTopMarginBase = binding.buttonBack.marginTop()
+        val backStartMarginBase = binding.buttonBack.marginStart()
+        val flipTopMarginBase = binding.buttonFlipCamera.marginTop()
+        val flipEndMarginBase = binding.buttonFlipCamera.marginEnd()
+        val scriptTopMarginBase = binding.buttonScriptSelector.marginTop()
+        val scriptEndMarginBase = binding.buttonScriptSelector.marginEnd()
+        val scanBottomMarginBase = binding.buttonScan.marginBottom()
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.cameraScanRoot) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+
+            // Keep camera preview truly edge-to-edge. Apply insets only to controls.
+            binding.cameraScanRoot.setPadding(0, 0, 0, 0)
+
+            binding.buttonBack.updateMargins(
+                top = backTopMarginBase + systemBars.top,
+                start = backStartMarginBase + systemBars.left
+            )
+            binding.buttonFlipCamera.updateMargins(
+                top = flipTopMarginBase + systemBars.top,
+                end = flipEndMarginBase + systemBars.right
+            )
+            binding.buttonScriptSelector.updateMargins(
+                top = scriptTopMarginBase + systemBars.top,
+                end = scriptEndMarginBase + systemBars.right
+            )
+            binding.buttonScan.updateMargins(
+                bottom = scanBottomMarginBase + systemBars.bottom
+            )
+
             insets
         }
+
+        ViewCompat.requestApplyInsets(binding.cameraScanRoot)
     }
 
     private fun observeUiState() {
@@ -227,10 +258,20 @@ class CameraScanActivity : AppCompatActivity() {
 
         if (isGranted) {
             viewModel.onPermissionResult(true)
-            startCameraWhenPreviewReady()
             ensureLocationPermissionOptional()
         } else {
             requestCameraPermission.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val isGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+        if (isGranted) {
+            startCameraWhenPreviewReady()
         }
     }
 
@@ -266,6 +307,9 @@ class CameraScanActivity : AppCompatActivity() {
 
     override fun onStop() {
         pendingBindRequest = false
+        frameAnalyzer?.close()
+        frameAnalyzer = null
+        unbindCameraUseCases()
         super.onStop()
     }
 
@@ -286,6 +330,52 @@ class CameraScanActivity : AppCompatActivity() {
         if (!isGranted) {
             requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+    }
+
+    private fun unbindCameraUseCases() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener(
+            {
+                runCatching {
+                    cameraProviderFuture.get().unbindAll()
+                }
+            },
+            ContextCompat.getMainExecutor(this)
+        )
+    }
+
+    private fun View.marginTop(): Int {
+        val params = layoutParams as? ViewGroup.MarginLayoutParams
+        return params?.topMargin ?: 0
+    }
+
+    private fun View.marginBottom(): Int {
+        val params = layoutParams as? ViewGroup.MarginLayoutParams
+        return params?.bottomMargin ?: 0
+    }
+
+    private fun View.marginStart(): Int {
+        val params = layoutParams as? ViewGroup.MarginLayoutParams
+        return params?.marginStart ?: 0
+    }
+
+    private fun View.marginEnd(): Int {
+        val params = layoutParams as? ViewGroup.MarginLayoutParams
+        return params?.marginEnd ?: 0
+    }
+
+    private fun View.updateMargins(
+        top: Int? = null,
+        bottom: Int? = null,
+        start: Int? = null,
+        end: Int? = null
+    ) {
+        val params = layoutParams as? ViewGroup.MarginLayoutParams ?: return
+        top?.let { params.topMargin = it }
+        bottom?.let { params.bottomMargin = it }
+        start?.let { params.marginStart = it }
+        end?.let { params.marginEnd = it }
+        layoutParams = params
     }
 
     private fun bindCameraUseCases() {

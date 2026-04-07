@@ -6,7 +6,6 @@ import android.transition.Fade
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityOptionsCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -41,8 +40,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.cardStartScan.setOnClickListener {
-            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, binding.logoContainer, "transition_scan")
-            startActivity(Intent(this, CameraScanActivity::class.java), options.toBundle())
+            startActivity(Intent(this, CameraScanActivity::class.java))
         }
 
         binding.cardViewHistory.setOnClickListener {
