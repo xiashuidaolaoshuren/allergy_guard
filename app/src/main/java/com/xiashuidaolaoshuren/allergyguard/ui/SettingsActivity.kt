@@ -1,5 +1,7 @@
 package com.xiashuidaolaoshuren.allergyguard.ui
 
+import android.content.IntentFilter
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -7,9 +9,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.xiashuidaolaoshuren.allergyguard.R
 import com.xiashuidaolaoshuren.allergyguard.databinding.ActivitySettingsBinding
 import com.xiashuidaolaoshuren.allergyguard.logic.TranslationManager
+import com.xiashuidaolaoshuren.allergyguard.receiver.ConnectivityReceiver
 import com.xiashuidaolaoshuren.allergyguard.ui.translation.TranslationLanguageAdapter
 import com.xiashuidaolaoshuren.allergyguard.ui.translation.TranslationLanguageUiModel
 
@@ -17,6 +21,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var adapter: TranslationLanguageAdapter
     private var languageItems: List<TranslationLanguageUiModel> = emptyList()
+    private var connectivityReceiver: ConnectivityReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +34,49 @@ class SettingsActivity : AppCompatActivity() {
         setupInsets()
         setupRecyclerView()
         loadLanguages()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        connectivityReceiver = ConnectivityReceiver { onWifiConnected() }
+        @Suppress("DEPRECATION")
+        registerReceiver(
+            connectivityReceiver,
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        connectivityReceiver?.let { unregisterReceiver(it) }
+        connectivityReceiver = null
+    }
+
+    private fun onWifiConnected() {
+        val pendingItems = languageItems.filter { !it.isDownloaded && !it.isDownloading }
+        if (pendingItems.isEmpty()) return
+
+        Snackbar.make(
+            binding.root,
+            getString(R.string.snackbar_wifi_download_prompt, pendingItems.size),
+            Snackbar.LENGTH_LONG
+        ).setAction(getString(R.string.snackbar_action_download_all)) {
+            pendingItems.forEach { item ->
+                markDownloading(item.languageTag)
+                TranslationManager.downloadModel(item.languageTag)
+                    .addOnSuccessListener {
+                        setDownloaded(item.languageTag, isDownloaded = true)
+                    }
+                    .addOnFailureListener { error ->
+                        setDownloaded(item.languageTag, isDownloaded = false)
+                        Toast.makeText(
+                            this,
+                            getString(R.string.translation_download_failed, item.displayName, error.message ?: ""),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            }
+        }.show()
     }
 
     private fun setupInsets() {

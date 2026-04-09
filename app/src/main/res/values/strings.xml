@@ -72,4 +72,18 @@
     <string name="history_delete_confirm_title">Delete scan</string>
     <string name="history_delete_confirm_message">Remove this scan record? This cannot be undone.</string>
     <string name="history_summary_safe">No allergens detected</string>
+
+    <!-- Notification channels -->
+    <string name="notif_channel_reminders_name">Reminders</string>
+    <string name="notif_channel_reminders_desc">Daily reminders to scan your food</string>
+    <string name="notif_channel_allergen_name">Allergen Alerts</string>
+    <string name="notif_channel_allergen_desc">Alerts when allergens are detected during a scan</string>
+
+    <!-- Boot reminder notification -->
+    <string name="notif_reminder_title">AllergyGuard Reminder</string>
+    <string name="notif_reminder_text">Don\'t forget to scan your food today!</string>
+
+    <!-- Wi-Fi connectivity Snackbar -->
+    <string name="snackbar_wifi_download_prompt">Wi-Fi connected. %1$d translation model(s) not yet downloaded.</string>
+    <string name="snackbar_action_download_all">Download All</string>
 </resources>
