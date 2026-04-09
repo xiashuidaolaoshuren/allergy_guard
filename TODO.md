@@ -57,7 +57,7 @@
 - [x] Add UI indicators to show if text is being translated in real-time
 
 ## Phase 9: Refinement & Testing
-- [ ] Performance profiling (memory usage during OCR)
+- [X] Performance profiling (memory usage during OCR)
 - [X] UI Polish (Logo, theme, animations)
 - [X] Test with physical food labels under varied lighting
 - [ ] Final bug fixing and cleanup

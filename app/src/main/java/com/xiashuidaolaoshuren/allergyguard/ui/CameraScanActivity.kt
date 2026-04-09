@@ -5,16 +5,19 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraInfoUnavailableException
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
-import androidx.camera.core.CameraInfoUnavailableException
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -40,6 +43,7 @@ import com.xiashuidaolaoshuren.allergyguard.ui.camera.OverlayView
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class CameraScanActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraScanBinding
@@ -60,6 +64,7 @@ class CameraScanActivity : AppCompatActivity() {
     }
     private lateinit var cameraExecutor: ExecutorService
     private var frameAnalyzer: CameraFrameAnalyzer? = null
+    private var boundCamera: Camera? = null
     private var selectedScript: OcrScript = OcrScript.LATIN
     private var isFrontCamera: Boolean = false
     private var lastRenderedAllergens: List<String> = emptyList()
@@ -92,6 +97,7 @@ class CameraScanActivity : AppCompatActivity() {
         // TextureView mode avoids SurfaceView size/position glitches on some devices.
         binding.previewViewCamera.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         binding.previewViewCamera.scaleType = PreviewView.ScaleType.FILL_CENTER
+        setupTouchToFocus()
         selectedScript = loadSelectedScript()
         updateScriptSelectorLabel()
 
@@ -309,6 +315,7 @@ class CameraScanActivity : AppCompatActivity() {
         pendingBindRequest = false
         frameAnalyzer?.close()
         frameAnalyzer = null
+        boundCamera = null
         unbindCameraUseCases()
         super.onStop()
     }
@@ -337,11 +344,67 @@ class CameraScanActivity : AppCompatActivity() {
         cameraProviderFuture.addListener(
             {
                 runCatching {
+                    boundCamera = null
                     cameraProviderFuture.get().unbindAll()
                 }
             },
             ContextCompat.getMainExecutor(this)
         )
+    }
+
+    private fun setupTouchToFocus() {
+        binding.previewViewCamera.setOnTouchListener { view, event ->
+            if (event.action != MotionEvent.ACTION_UP) {
+                return@setOnTouchListener false
+            }
+
+            view.performClick()
+            showFocusTapIndicator(event.x, event.y)
+
+            val meteringPoint = binding.previewViewCamera
+                .meteringPointFactory
+                .createPoint(event.x, event.y)
+
+            val focusAction = FocusMeteringAction.Builder(
+                meteringPoint,
+                FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
+            )
+                .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                .build()
+
+            runCatching {
+                boundCamera?.cameraControl?.startFocusAndMetering(focusAction)
+            }
+
+            true
+        }
+    }
+
+    private fun showFocusTapIndicator(x: Float, y: Float) {
+        val indicator = binding.focusTapIndicator
+        val size = if (indicator.width > 0) {
+            indicator.width.toFloat()
+        } else {
+            dpToPx(56f)
+        }
+
+        indicator.animate().cancel()
+        indicator.translationX = x - (size / 2f)
+        indicator.translationY = y - (size / 2f)
+        indicator.alpha = 1f
+        indicator.visibility = View.VISIBLE
+
+        indicator.animate()
+            .alpha(0f)
+            .setDuration(700L)
+            .withEndAction {
+                indicator.visibility = View.GONE
+            }
+            .start()
+    }
+
+    private fun dpToPx(dp: Float): Float {
+        return dp * resources.displayMetrics.density
     }
 
     private fun View.marginTop(): Int {
@@ -432,7 +495,7 @@ class CameraScanActivity : AppCompatActivity() {
 
                 try {
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
+                    boundCamera = cameraProvider.bindToLifecycle(
                         this,
                         cameraSelector,
                         preview,
