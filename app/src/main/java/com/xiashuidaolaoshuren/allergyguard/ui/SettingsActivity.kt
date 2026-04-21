@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,10 +40,11 @@ class SettingsActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         connectivityReceiver = ConnectivityReceiver { onWifiConnected() }
-        @Suppress("DEPRECATION")
-        registerReceiver(
+        ContextCompat.registerReceiver(
+            this,
             connectivityReceiver,
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
     }
 

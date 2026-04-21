@@ -23,6 +23,7 @@ import com.xiashuidaolaoshuren.allergyguard.util.NotificationHelper
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private var notificationPermissionRequested = false
 
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op */ }
@@ -35,7 +36,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         NotificationHelper.createChannels(this)
-        requestNotificationPermissionIfNeeded()
 
         window.exitTransition = Fade()
 
@@ -62,6 +62,14 @@ class MainActivity : AppCompatActivity() {
         binding.cardSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus || notificationPermissionRequested) return
+        // Request only after first frame/window focus to avoid splash screen pre-draw deadlock.
+        notificationPermissionRequested = true
+        requestNotificationPermissionIfNeeded()
     }
 
     private fun requestNotificationPermissionIfNeeded() {
