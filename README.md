@@ -10,6 +10,9 @@ AllergyGuard is an Android application designed to help users quickly and safely
 *   **Dynamic Visual Overlays:** Draws color-coded bounding boxes directly over the camera feed—pulsing red for detected allergens and green for safe text.
 *   **Scan History & Location Tracking:** Automatically logs scans into a local database. Includes optional Google Maps integration to track where you scanned safe or unsafe products.
 *   **Multi-language Support:** Detects non-English text automatically and translates it to English using on-device translation models before matching against allergens.
+*   **Android Broadcasting Suite:**
+    *   **Proactive Reminders:** Uses a `BootReceiver` (manifest-registered) to send daily-use reminder notifications on device restart.
+    *   **Connectivity-Aware Downloads:** A dynamic `ConnectivityReceiver` detects Wi-Fi in the Settings screen and prompts translation model pre-downloads.
 
 ## 🛠 Tech Stack
 

@@ -1,9 +1,9 @@
 # AllergyGuard - Technical Report
 
 ## 1. Idea and Motivation
-Traveling and exploring global cuisines is a universally beloved experience. However, for individuals with food allergies, dining in a foreign country where they do not speak the language can turn a joyful experience into a life-threatening situation. Language barriers make it incredibly difficult to read food labels, ingredient lists, or restaurant menus accurately. 
+Many people rely on written ingredient information when making safe food choices, but that information is not always easy to understand in every setting. Labels, menus, and packaged products may use unfamiliar wording, different languages, or formatting that makes quick manual checking difficult.
 
-**AllergyGuard** was designed to solve this exact problem. It acts as a real-time safety net, saving users from accidental exposure to allergens. By integrating on-device optical character recognition (OCR) and translation, the app allows users to simply point their camera at a menu or label and immediately see if any of their specific dietary restrictions are present, regardless of the language barrier.
+**AllergyGuard** is designed to make that process easier by giving users a fast way to inspect food text and check it against their dietary restrictions. By combining on-device optical character recognition (OCR) with translation and allergen matching, the app helps users review menus and labels more confidently in a variety of everyday and travel scenarios.
 
 ## 2. Core Features and Technical Implementation
 The app is built natively in Android using Kotlin and XML, adhering to the MVVM (Model-View-ViewModel) architecture to separate UI, data, and logic layers cleanly. 
@@ -43,9 +43,16 @@ Provides a historical log and geographic context for where allergens were encoun
 ### Settings View
 Manages the configuration for the app's translation and scanning features.
 *   **Model Management**: Using the `TranslationManager` singleton, we handle the downloading and status tracking of each language model. This allows the app to perform real-time translation entirely offline once the models are cached, which is crucial for travelers without international roaming.
+*   **Connectivity-Aware Auto-Download**: To optimize offline readiness, a dynamically-registered `ConnectivityReceiver` monitors Wi-Fi availability via `ConnectivityManager.CONNECTIVITY_ACTION`. When a Wi-Fi connection is detected while the settings screen is active, the app automatically checks for any undownloaded translation models. If pending models exist, a Material Snackbar prompts the user to "Download All," triggering a batch download through the `TranslationManager`. This demonstrates reactive UI patterns and lifecycle-aware broadcast management (registering in `onStart` and unregistering in `onStop`).
+
+### Notification & Boot Architecture
+Beyond the main UI, the app utilizes Android's broadcasting mechanism to provide background engagement and system-level integration.
+*   **Boot Reminder Notification**: A manifest-registered `BootReceiver` listens for the `android.intent.action.BOOT_COMPLETED` system broadcast. Upon device restart, it triggers the `NotificationHelper` to post a daily reminder ("Don't forget to scan your food today!") to the user's notification tray. This ensures the app remains "top-of-mind" for users managing chronic allergies.
+*   **Notification Channels**: The app establishes a structured `NotificationHelper` utility that defines two distinct channels: `CHANNEL_REMINDERS` (Importance: Default) for engagement prompts and `CHANNEL_ALLERGEN_ALERTS` (Importance: High) reserved for future real-time safety warnings.
+*   **Runtime Permission Safety**: For devices running Android 13+ (API 33), the `POST_NOTIFICATIONS` runtime permission is gracefully handled. The request is deferred until `onWindowFocusChanged` in `MainActivity` to ensure the permission dialog does not interfere with the initial splash screen transition, avoiding potential startup deadlocks.
 
 ## 3. Technical Difficulties
-The core scanning functionality introduced several significant technical challenges:
+The core scanning and broadcasting functionality introduced several significant technical challenges:
 
 1. **Coordinate Mapping and UI Alignment**: The most difficult part of the implementation was aligning the bounding boxes provided by ML Kit with the real-world preview on the screen. The ML Kit image dimensions often differ from the phone's screen dimensions, and adjusting for `ScaleType.FILL_CENTER`, device rotation, and especially front-camera flipping required complex matrix math and offset calculations.
 2. **Performance Optimization (Frame Throttling)**: Running OCR and fuzzy matching on every single frame heavily throttled the CPU and caused the camera preview to stutter. This was resolved by implementing a frame-skipping strategy (processing every Nth frame) and offloading the logic (Regex normalization, Levenshtein distance calculations) to dedicated Kotlin Coroutine threads (`Dispatchers.IO` and `Dispatchers.Default`), strictly isolating them from the Main UI thread.
@@ -58,3 +65,40 @@ While the current app is highly functional, several features could elevate the c
 2. **Advanced Performance Optimization**: While current frame-skipping works, implementing a more sophisticated backpressure strategy or using GPU-accelerated computing (via RenderScript or Vulkan) could allow for processing higher-resolution frames with even lower latency.
 3. **Expanded Language and Script Support**: Integration of additional OCR scripts (such as Arabic, Devanagari, or Cyrillic) and broader translation model support would make the app truly global, covering almost all major travel destinations.
 4. **Enhanced Offline Capabilities**: Implementing a "Travel Pack" feature that automatically pre-caches all necessary OCR and translation models based on a user's upcoming travel destinations, ensuring a seamless experience even in remote areas with zero connectivity.
+
+## 5. Build Instructions
+To facilitate testing by the course teaching team, the following environment and steps are required:
+
+### Development Environment
+- **IDE**: Developed in Android Studio Panda 2 (2025.3.2).
+- **JDK**: Java 11
+- **Gradle**: 8.13.2
+- **SDK Targets**: Compile/Target SDK 36, Min SDK 30.
+
+### Setup & Build
+1.  **Clone & Open**: Open the project folder in Android Studio and allow Gradle to sync.
+2.  **API Keys**: A Google Maps SDK API key is required for the Map History feature. Add it to `local.properties`:
+    ```properties
+    MAPS_API_KEY=YOUR_KEY_HERE
+    ```
+3.  **Build APK**: Run `./gradlew assembleDebug` from the terminal or use the "Build APK" task in Android Studio.
+4.  **No External Dependencies**: This is a standalone Android project. There are no external Java clients or backend servers to install; all ML models and database logic are on-device.
+
+### Testing Prerequisites
+- **Device/Emulator**: Use a physical device or an emulator with **Camera support** and **Services** (e.g., Google Play Services) enabled.
+- **Initial Sync**: When testing translation, ensure the device has an internet connection initially to download the ML models (triggered via Wi-Fi notification in Settings).
+
+## 6. Reflection and Project Status
+### Comparison with Proposal
+The final implementation successfully delivers all 5 core features promised in the proposal:
+- **Profile Management**: Fully implemented with Room database and custom keywords.
+- **Smart Scan**: Implemented using CameraX and ML Kit.
+- **Allergen Detection**: Implemented with length-adaptive Levenshtein fuzzy matching.
+- **Visual Alerts**: Delivered via pulsing bounding boxes.
+- **History Log**: Implemented with Room and integrated with Google Maps.
+
+### Deviations and Extensions
+The project **exceeded the original scope** in several key areas to improve real-world utility:
+- **On-Device Translation**: Added automatic language identification and translation for CJK scripts, which was not explicitly detailed in the proposal.
+- **Broadcasting Mechanism**: Implemented `BootReceiver` for user engagement and `ConnectivityReceiver` for model management.
+- **Offline-First Choice**: We intentionally deviated from a potential client-server architecture in favor of a purely on-device design to maximize user privacy and reliability for travelers.
